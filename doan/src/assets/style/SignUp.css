@@ -1,0 +1,177 @@
+/* Chỉnh tổng thể */
+.signup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f8f9fa;
+  gap: 5px; /* Tăng khoảng cách giữa hai panel */
+  padding: 20px;
+}
+
+/* Hình ảnh bên trái */
+.left-panel {
+  position: relative; /* Giữ nguyên padding mà vẫn hiển thị hình ảnh */
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #fde9dc;
+  padding: 310px;
+  border-radius: 20px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  max-width: 310px;
+}
+
+.left-panel img {
+  position: absolute; /* Đặt ảnh vào giữa panel */
+  width: 450px; /* Kích thước ảnh phù hợp */
+  height: auto;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Form bên phải */
+.right-panel {
+  flex: 1;
+  max-width: 380px; /* Điều chỉnh chiều rộng form */
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 15px; /* Bo góc */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Tiêu đề */
+.right-panel h2 {
+  margin-bottom: 10px;
+  font-size: 26px;
+  color: #333;
+  text-align: center;
+}
+
+/* Văn bản phụ */
+.right-panel p {
+  margin-bottom: 20px;
+  color: #666;
+  text-align: center;
+}
+
+/* Các trường input */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #444;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px; /* Bo góc input */
+  font-size: 14px;
+}
+
+/* Checkbox hiển thị mật khẩu */
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 15px;
+}
+
+.checkbox-group input {
+  width: 16px;
+  height: 16px;
+}
+
+/* Nhóm nút */
+.button-group {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-primary,
+.btn-secondary {
+  flex: 1;
+  padding: 12px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #181a5c;
+}
+
+.btn-secondary {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #27642b;
+}
+
+/* Responsive: Điều chỉnh cho màn hình nhỏ hơn */
+@media (max-width: 768px) {
+  .signup-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .left-panel {
+    max-width: 100%;
+    padding: 15px;
+  }
+
+  .left-panel img {
+    max-width: 40%;
+  }
+
+  .right-panel {
+    max-width: 100%;
+  }
+}
+/* Thêm chút style cho captcha */
+.captcha-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1em;
+}
+
+.captcha-row {
+  display: flex;
+  align-items: center; /* căn giữa theo chiều dọc */
+  gap: 8px; /* khoảng cách giữa captcha và nút */
+  margin: 0.5em 0;
+}
+
+.captcha-image {
+  width: 150px;
+  height: 50px;
+  user-select: none;
+}
+
+.btn-refresh-captcha {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-size: 1.3em;
+  color: #666;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  height: 50px; /* đặt cùng chiều cao với captcha để nút được căn giữa */
+}

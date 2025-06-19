@@ -1,0 +1,81 @@
+.motor-detail-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  padding: 20px;
+  margin-top: 80px;
+}
+.motor-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 16px;
+  line-height: 1.6;
+  text-align: left; /* Giữ căn trái mặc định */
+}
+
+.motor-details p {
+  margin: 0;
+}
+
+/* ⭐ Mô tả căn đều hai bên */
+.motor-details p.description {
+  text-align: justify;
+}
+.motor-info {
+  display: flex;
+  gap: 20px;
+  width: 60%;
+}
+
+.motor-image {
+  width: 400px;
+  height: auto;
+}
+
+.motor-details {
+  flex: 1;
+}
+
+.rental-form {
+  width: 35%;
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+form label {
+  display: block;
+  margin-top: 10px;
+}
+
+form input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background: #ffcc00;
+  border: none;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+.error-message {
+  color: red;
+  margin-top: 10px;
+}
+.datetime-picker {
+  display: flex;
+  gap: 10px;
+}
+.warning-message {
+  color: #d97706;
+  font-weight: bold;
+  margin: 8px 0;
+}
