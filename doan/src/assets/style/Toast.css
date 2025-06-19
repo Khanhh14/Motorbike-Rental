@@ -1,0 +1,43 @@
+/* Custom style cho toast */
+.Toastify__toast {
+  border-radius: 8px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  padding: 12px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Toast thành công */
+.Toastify__toast--success {
+  background: #28a745; /* màu xanh lá */
+  color: white;
+}
+
+/* Toast lỗi */
+.Toastify__toast--error {
+  background: #dc3545; /* màu đỏ */
+  color: white;
+}
+
+/* Toast cảnh báo */
+.Toastify__toast--warning {
+  background: #ffc107; /* màu vàng */
+  color: #212529;
+}
+
+/* Toast thông tin */
+.Toastify__toast--info {
+  background: #17a2b8; /* màu xanh da trời */
+  color: white;
+}
+
+/* Nút đóng toast */
+.Toastify__close-button {
+  color: white;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.Toastify__close-button:hover {
+  opacity: 1;
+}

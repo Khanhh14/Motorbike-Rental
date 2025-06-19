@@ -1,0 +1,172 @@
+/* ------------------------------
+   Đặt màu sắc và font cơ bản
+--------------------------------*/
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f0f2f5; /* Màu nền trang */
+  }
+  
+  .login-content {
+    display: flex;
+    width: 900px;              /* Độ rộng khung */
+    min-height: 500px;         /* Chiều cao khung */
+    background-color: #ffffff; /* Nền trắng cho khung chính */
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden; /* Giúp bo góc không bị tràn */
+  }
+  
+  /* ------------------------------
+     Bên trái: Khu vực Form
+  --------------------------------*/
+  .login-form-area {
+    flex: 1;
+    padding: 40px 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .brand-title h2 {
+    margin: 0;
+    color: #2e7d32; /* Màu xanh lá đậm */
+    font-size: 24px;
+    font-weight: 700;
+  }
+  
+  .welcome-title {
+    margin: 20px 0 8px;
+    font-size: 20px;
+    color: #333333;
+  }
+  
+  .welcome-subtitle {
+    margin: 0 0 20px;
+    color: #666666;
+    font-size: 14px;
+  }
+  
+  .login-form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .form-group {
+    margin-bottom: 16px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: #555555;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+  }
+  
+  .form-group input:focus {
+    border-color: #2e7d32; /* Xanh lá đậm khi focus */
+  }
+  
+  /* ------------------------------
+     Tuỳ chọn: Remember me, Forgot pw
+  --------------------------------*/
+  .options-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  
+  .checkbox-remember {
+    display: flex;
+    align-items: center;
+  }
+  
+  .checkbox-remember input[type="checkbox"] {
+    margin-right: 5px;
+  }
+  
+  .forgot-password {
+    font-size: 14px;
+    color: #2e7d32;
+    text-decoration: none;
+  }
+  
+  .forgot-password:hover {
+    text-decoration: underline;
+  }
+  
+  /* ------------------------------
+     Button hàng dưới
+  --------------------------------*/
+  .button-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .login-button,
+  .signup-button {
+    flex: 1;
+    padding: 10px 0;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  .login-button {
+    background-color: #2e7d32;
+    color: #ffffff;
+  }
+  
+  .login-button:hover {
+    background-color: #27642b;
+  }
+  
+  .signup-button {
+    background-color: #007bff;
+    color: #cccccc;
+  }
+  
+  .signup-button:hover {
+    background-color: #16385f;
+  }
+  
+  /* ------------------------------
+     Bên phải: Hình minh hoạ
+  --------------------------------*/
+  .illustration-area {
+    flex: 1;
+    background-color: #fff8ec; /* Màu nền vàng nhạt */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  
+  .illustration-area img {
+    max-width: 80%;
+    height: auto;
+  }
+  .forgot-link {
+    color: green;
+    font-size: 14px;
+    text-decoration: none;
+    margin-left: auto;
+  }
+  .forgot-link:hover {
+    text-decoration: underline;
+  }
