@@ -4,7 +4,6 @@ import HomeView from "@/views/HomeView.vue";
 import SignUp from "@/components/SignUp.vue";
 import Login from "@/components/Login.vue"; 
 import AdminView from "@/views/AdminView.vue"; 
-import AboutView from "@/views/AboutView.vue"; 
 import MotorList from "@/components/MotorList.vue"; 
 import MotorDetail from "@/components/MotorDetail/MotorDetail.vue"; 
 import MotorAdmin from "@/components/MotorAdmin/MotorAdmin.vue"; 
@@ -28,11 +27,6 @@ const routes = [
     path: "/",
     name: "home",
     component: HomeView,
-  },
-  {
-    path: "/about",
-    name: "about",
-    component: AboutView,
   },
   {
     path: "/sign-up",
