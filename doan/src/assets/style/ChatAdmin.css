@@ -1,0 +1,31 @@
+.wrap { max-width: 1100px; margin: 20px auto; display: grid; grid-template-columns: 320px 1fr; gap: 16px; }
+
+.left { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
+.btn { border: 1px solid #d1d5db; background: #fff; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+
+.list { list-style: none; margin: 0; padding: 8px; max-height: 70vh; overflow: auto; }
+.item { width: 100%; text-align: left; padding: 10px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; cursor: pointer; }
+.item + .item { margin-top: 8px; }
+.id { font-weight: 600; }
+.last { font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.right { border: 1px solid #e5e7eb; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
+.room-head { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
+.room-id { color: #666; margin-left: 6px; }
+
+.room-body { flex: 1; padding: 12px; overflow: auto; }
+.row { display: flex; margin: 6px 0; }
+.row.me { justify-content: flex-end; }
+.row.peer { justify-content: flex-start; }
+.bubble { max-width: 80%; padding: 8px 12px; border-radius: 16px; }
+.row.me .bubble { background: #2e7d32; color: #fff; border-bottom-right-radius: 6px; }
+.row.peer .bubble { background: #f2f3f5; color: #222; border-bottom-left-radius: 6px; }
+.text { white-space: pre-wrap; word-wrap: break-word; }
+.time { font-size: 10px; opacity: .7; margin-top: 4px; text-align: right; }
+
+.room-input { display: flex; gap: 8px; border-top: 1px solid #e5e7eb; padding: 10px; }
+.room-input input { flex: 1; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 12px; outline: none; }
+.room-input input:focus { border-color: #2e7d32; box-shadow: 0 0 0 2px rgba(46, 125, 50, .15); }
+.room-input button { padding: 8px 14px; border: none; border-radius: 12px; background: #2e7d32; color: #fff; cursor: pointer; }
+.room-input button:disabled { opacity: .5; cursor: not-allowed; }

@@ -2,6 +2,7 @@
   <div class="sidebar">
     <h2>Travalizer</h2>
     <ul>
+      <li @click="$router.push('/admin/chatadmin')">💬 Hỗ trợ khách hàng</li>
       <li @click="$router.push('/admin/vehicle-type')">⚙️ Quản lý Loại Xe</li>
       <li @click="$router.push('/admin/motorbikes')">🏍️ Quản Lý Xe</li>
       <li @click="$router.push('/admin/rentals')">📅 Quản Lý Cho Thuê</li> 

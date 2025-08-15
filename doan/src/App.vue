@@ -1,24 +1,42 @@
 <script setup>
-import { RouterView, useRoute } from "vue-router";
-import NavHome from "@/components/NavHome.vue";
-import Footer from "@/components/Footer.vue";
+import { RouterView, useRoute } from "vue-router"
+import NavHome from "@/components/NavHome.vue"
+import Footer from "@/components/Footer.vue"
+import ChatPopup from "@/components/ChatPopup.vue"
 
-const route = useRoute();
+const route = useRoute()
 
-// Danh sách các đường dẫn không hiển thị NavHome và Footer
-const hiddenNavRoutes = ["/login", "/admin", "/sign-up","/userpage","/resetpassword","/forgotpassword", "/changepassword","/rental-motor",     "/admin/vehicle-type", "/admin/rentals","/admin/payments", "/admin/motorbikes","/admin/surcharges","/admin/stats", "/admin/reviews"];
-const hiddenFooterRoutes = ["/admin","/login", "/sign-up","/userpage","/resetpassword","/forgotpassword", "/changepassword","/rental-motor",           "/admin/vehicle-type","/admin/rentals","/admin/payments", "/admin/motorbikes","/admin/surcharges","/admin/stats", "/admin/reviews"];
+// Ẩn Nav/Footer ở các route cần thiết
+const hiddenNavRoutes = [
+  "/login","/admin","/sign-up","/userpage","/resetpassword","/forgotpassword",
+  "/changepassword","/rental-motor","/admin/vehicle-type","/admin/rentals",
+  "/admin/payments","/admin/motorbikes","/admin/surcharges",
+  "/admin/stats","/admin/reviews","/admin/chatadmin"
+]
+const hiddenFooterRoutes = [
+  "/admin","/login","/sign-up","/userpage","/resetpassword","/forgotpassword",
+  "/changepassword","/rental-motor","/admin/vehicle-type","/admin/rentals",
+  "/admin/payments","/admin/motorbikes","/admin/surcharges",
+  "/admin/stats","/admin/reviews","/admin/chatadmin"
+]
+
+// Ẩn chat ở các route admin
+const hiddenChatRoutes = [
+  "/admin","/admin/vehicle-type","/admin/rentals","/admin/payments",
+  "/admin/motorbikes","/admin/surcharges","/admin/stats",
+  "/admin/reviews","/admin/chatadmin"
+]
 </script>
 
-<template>  
+<template>
   <div>
-    <!-- Chỉ hiển thị NavHome nếu route.path không nằm trong danh sách hiddenNavRoutes -->
     <NavHome v-if="!hiddenNavRoutes.includes(route.path)" />
-    
-    <!-- Nội dung trang -->
+
     <RouterView />
 
-    <!-- Chỉ hiển thị Footer nếu route.path không nằm trong danh sách hiddenFooterRoutes -->
+    <!-- Chỉ hiển thị ChatPopup nếu không nằm trong hiddenChatRoutes -->
+    <ChatPopup v-if="!hiddenChatRoutes.includes(route.path)" />
+
     <Footer v-if="!hiddenFooterRoutes.includes(route.path)" />
   </div>
 </template>
