@@ -2,7 +2,8 @@
   <div class="rental-policy">
     <!-- Header -->
     <div class="header">
-      <h1>Chính Sách Thuê Xe</h1>
+      <div style ="text-align: center; margin-top: 50px;"></div>
+      <h1>GIÁ THUÊ XE</h1>
       <div class="underline"></div>
     </div>
 
