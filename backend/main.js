@@ -1,3 +1,4 @@
+/* eslint-disable */
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
@@ -6,13 +7,13 @@ const cookieParser = require("cookie-parser");
 const http = require("http");
 const session = require("express-session");
 const { Server } = require("socket.io");
-const { v4: uuidv4 } = require("uuid");            // <-- dùng cho id message
+const { v4: uuidv4 } = require("uuid");
 
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// ✅ Tạo socket.io server
+// ================= Socket.IO =================
 const io = new Server(server, {
   cors: {
     origin: process.env.CLIENT_URL || "http://localhost:5173",
@@ -20,31 +21,25 @@ const io = new Server(server, {
   },
 });
 
-/* ===========================
-   START: SOCKET FEATURES
-   - 1) Giữ xe tạm thời (đã có)
-   - 2) Chat realtime (mới)
-   =========================== */
-
-// --- (1) Giữ xe tạm thời ---
-const vehicleLocks = new Map();
-
-// --- (2) Chat realtime (in-memory) ---
-/**
- * rooms = Map<conversationId, {
- *   history: Array<{id, from, text, ts}>,
- *   participants: Set<socketId>
- * }>
- */
+// ====== In-memory stores ======
+const vehicleLocks = new Map(); // giữ xe tạm thời
+// rooms: Map<conversationId, { history:Array, participants:Set }>
 const rooms = new Map();
+
 function getRoom(id) {
-  if (!rooms.has(id)) rooms.set(id, { history: [], participants: new Set() });
+  if (!rooms.has(id)) {
+    rooms.set(id, { history: [], participants: new Set() });
+  }
   return rooms.get(id);
 }
 
-io.on("connection", (socket) => {
-  /* --------- A) LOCK/UNLOCK VEHICLE --------- */
-  socket.on("lock_vehicle", (vehicleId) => {
+function lastOf(arr) {
+  return arr && arr.length ? arr[arr.length - 1] : null;
+}
+
+io.on("connection", function (socket) {
+  // ---------- A) LOCK / UNLOCK VEHICLE ----------
+  socket.on("lock_vehicle", function (vehicleId) {
     if (!vehicleLocks.has(vehicleId)) {
       vehicleLocks.set(vehicleId, socket.id);
       socket.emit("lock_success", vehicleId);
@@ -54,68 +49,118 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("unlock_vehicle", (vehicleId) => {
+  socket.on("unlock_vehicle", function (vehicleId) {
     if (vehicleLocks.get(vehicleId) === socket.id) {
       vehicleLocks.delete(vehicleId);
       socket.broadcast.emit("vehicle_unlocked", vehicleId);
     }
   });
 
-  /* --------- B) CHAT REALTIME --------- */
-  // Client gửi khi mở widget / trang admin
-  // payload: { conversationId, isAdmin?, nickname? }
-  socket.on("join", ({ conversationId, isAdmin = false, nickname = "Guest" } = {}) => {
-    if (!conversationId) return;
-    socket.data.conversationId = conversationId;
-    socket.data.isAdmin = !!isAdmin;
-    socket.data.nickname = nickname;
+  // ---------- B) CHAT REALTIME ----------
+  // Client join phòng: payload { conversationId, isAdmin?, nickname? }
+  socket.on(
+    "join",
+    function (payload) {
+      // payload mặc định
+      payload = payload || {};
+      var conversationId = payload.conversationId;
+      var isAdmin = !!payload.isAdmin;
+      var nickname = payload.nickname || "Guest";
 
-    const room = getRoom(conversationId);
-    room.participants.add(socket.id);
-    socket.join(conversationId);
+      if (!conversationId) return;
 
-    // gửi lại lịch sử (tối đa 50 tin)
-    const history = room.history.slice(-50);
-    socket.emit("history", history);
+      socket.data.conversationId = conversationId;
+      socket.data.isAdmin = isAdmin;
+      socket.data.nickname = nickname;
 
-    // thông báo hiện diện (nếu cần dùng phía client)
-    io.to(conversationId).emit("presence", { type: "join", nickname });
-  });
+      var room = getRoom(conversationId);
+      room.participants.add(socket.id);
+      socket.join(conversationId);
 
-  // Gửi tin nhắn: { text, from }  (from: 'me' | 'admin' ...)
-  socket.on("message", ({ text, from } = {}) => {
-    const conv = socket.data.conversationId;
+      // gửi lịch sử gần nhất
+      socket.emit("history", room.history.slice(-50));
+
+      // thông báo + yêu cầu FE refresh list
+      io.to(conversationId).emit("presence", { type: "join", nickname: nickname });
+      io.emit("rooms:update");
+    }
+  );
+
+  // Gửi tin nhắn: payload { text, from }
+  socket.on("message", function (payload) {
+    payload = payload || {};
+    var text = payload.text;
+    var from = payload.from;
+
+    var conv = socket.data && socket.data.conversationId;
     if (!conv || !text) return;
 
-    const msg = { id: uuidv4(), from, text, ts: Date.now() };
-    const room = getRoom(conv);
+    var room = getRoom(conv);
+    var msg = { id: uuidv4(), from: from, text: text, ts: Date.now() };
 
     room.history.push(msg);
-    if (room.history.length > 200) room.history.shift(); // hạn chế bộ nhớ
+    if (room.history.length > 200) {
+      room.history.shift();
+    }
 
     io.to(conv).emit("message", msg);
+    io.emit("rooms:update"); // cập nhật list ở admin
   });
 
   // Typing indicator
-  socket.on("typing", ({ from, isTyping } = {}) => {
-    const conv = socket.data.conversationId;
+  socket.on("typing", function (payload) {
+    payload = payload || {};
+    var from = payload.from;
+    var isTyping = !!payload.isTyping;
+
+    var conv = socket.data && socket.data.conversationId;
     if (!conv) return;
-    socket.to(conv).emit("typing", { from, isTyping });
+
+    socket.to(conv).emit("typing", { from: from, isTyping: isTyping });
   });
 
-  // Admin: liệt kê các cuộc trò chuyện đang có
-  socket.on("admin:list-conversations", () => {
-    if (!socket.data.isAdmin) return;
-    const list = Array.from(rooms.keys()).map((id) => ({
-      id,
-      lastTs: rooms.get(id).history.at(-1)?.ts || 0,
-      lastText: rooms.get(id).history.at(-1)?.text || "",
-    }));
-    socket.emit("admin:conversations", list.sort((a, b) => b.lastTs - a.lastTs));
+  // Admin: danh sách cuộc trò chuyện
+  socket.on("admin:list-conversations", function () {
+    if (!(socket.data && socket.data.isAdmin)) return;
+
+    var list = Array.from(rooms.keys())
+      .filter(function (id) {
+        return id !== "admin-dashboard"; // bỏ phòng hệ thống
+      })
+      .map(function (id) {
+        var room = rooms.get(id);
+
+        var onlineCount = 0;
+        var hasCustomer = false;
+
+        room.participants.forEach(function (sid) {
+          var s = io.sockets.sockets.get(sid);
+          if (s) {
+            onlineCount += 1;
+            if (!(s.data && s.data.isAdmin)) {
+              hasCustomer = true;
+            }
+          }
+        });
+
+        var last = lastOf(room.history);
+        return {
+          id: id,
+          lastTs: (last && last.ts) || 0,
+          lastText: (last && last.text) || "",
+          onlineCount: onlineCount,
+          hasCustomer: hasCustomer,
+        };
+      })
+      .sort(function (a, b) {
+        return b.lastTs - a.lastTs;
+      });
+
+    socket.emit("admin:conversations", list);
   });
 
-  /* --------- C) CLEANUP khi disconnect --------- */
-  socket.on("disconnect", () => {
+  // ---------- C) CLEANUP ----------
+  socket.on("disconnect", function () {
     // giải phóng xe
     for (const [vehicleId, lockerSocketId] of vehicleLocks.entries()) {
       if (lockerSocketId === socket.id) {
@@ -125,36 +170,33 @@ io.on("connection", (socket) => {
     }
 
     // rời phòng chat
-    const conv = socket.data?.conversationId;
+    var conv = socket.data && socket.data.conversationId;
     if (conv && rooms.has(conv)) {
-      const room = rooms.get(conv);
+      var room = rooms.get(conv);
       room.participants.delete(socket.id);
-      // nếu muốn dọn lịch sử khi không còn ai và không có tin nào, bật dòng dưới
+      // nếu muốn dọn phòng rỗng:
       // if (room.participants.size === 0 && room.history.length === 0) rooms.delete(conv);
+      io.emit("rooms:update");
     }
   });
 });
-// --- END SOCKET FEATURES ---
 
-// ✅ Middleware
+// ================= Middlewares & Routes =================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// session để lưu captcha (hoặc mục đích khác)
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "your-secret-key",
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }, // true nếu dùng HTTPS/Proxy thiết lập trust
+    cookie: { secure: false },
   })
 );
 
-// ✅ Cho phép truy cập thư mục uploads
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
-// ✅ Cấu hình CORS
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:5173",
@@ -163,10 +205,11 @@ app.use(
   })
 );
 
-// ✅ Chặn favicon lỗi
-app.get("/favicon.ico", (req, res) => res.status(204).end());
+app.get("/favicon.ico", function (req, res) {
+  return res.status(204).end();
+});
 
-// ✅ Import routes
+// ===== Routes (giữ nguyên của bạn) =====
 const authRoutes = require("./src/routes/auth.routes");
 const motorbikeRoutes = require("./src/routes/motorbike.routes");
 const rentalRoutes = require("./src/routes/rental.routes");
@@ -178,10 +221,8 @@ const surchargeRoutes = require("./src/routes/surcharge.routes");
 const vehicletype = require("./src/routes/vehicletype.routes");
 const captchaRoute = require("./src/routes/captcha.routes");
 
-// ✅ Import cron job
 require("./src/utils/cronJobs");
 
-// ✅ Gắn routes
 app.use("/api/auth", authRoutes);
 app.use("/api/motorbikes", motorbikeRoutes);
 app.use("/api/rentals", rentalRoutes);
@@ -193,21 +234,26 @@ app.use("/api/surcharges", surchargeRoutes);
 app.use("/api/vehicletype", vehicletype);
 app.use("/api/captcha", captchaRoute);
 
-// ✅ 404
-app.use((req, res, next) => {
+// 404
+app.use(function (req, res) {
   res.status(404).json({ error: "Không tìm thấy API" });
 });
 
-// ✅ Error handler
-app.use((err, req, res, next) => {
-  console.error("Lỗi:", err.message);
-  res.status(err.status || 500).json({
-    error: process.env.NODE_ENV === "production" ? "Lỗi server!" : err.message,
+// Error handler
+app.use(function (err, req, res, _next) {
+  console.error("Lỗi:", err && err.message ? err.message : err);
+  res.status(err && err.status ? err.status : 500).json({
+    error:
+      process.env.NODE_ENV === "production"
+        ? "Lỗi server!"
+        : err && err.message
+        ? err.message
+        : "Unknown error",
   });
 });
 
-// ✅ Khởi động server
+// Start
 const port = process.env.PORT || 5000;
-server.listen(port, () => {
-  console.log(`Server đang chạy tại: http://localhost:${port}`);
+server.listen(port, function () {
+  console.log("Server đang chạy tại: http://localhost:" + port);
 });
