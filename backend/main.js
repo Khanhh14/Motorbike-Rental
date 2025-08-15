@@ -4,8 +4,9 @@ const dotenv = require("dotenv");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const http = require("http");
-const session = require("express-session"); // <-- Thêm express-session
+const session = require("express-session");
 const { Server } = require("socket.io");
+const { v4: uuidv4 } = require("uuid");            // <-- dùng cho id message
 
 dotenv.config();
 const app = express();
@@ -19,11 +20,30 @@ const io = new Server(server, {
   },
 });
 
-// --- START: Quản lý giữ xe tạm thời bằng socket.io ---
+/* ===========================
+   START: SOCKET FEATURES
+   - 1) Giữ xe tạm thời (đã có)
+   - 2) Chat realtime (mới)
+   =========================== */
+
+// --- (1) Giữ xe tạm thời ---
 const vehicleLocks = new Map();
 
+// --- (2) Chat realtime (in-memory) ---
+/**
+ * rooms = Map<conversationId, {
+ *   history: Array<{id, from, text, ts}>,
+ *   participants: Set<socketId>
+ * }>
+ */
+const rooms = new Map();
+function getRoom(id) {
+  if (!rooms.has(id)) rooms.set(id, { history: [], participants: new Set() });
+  return rooms.get(id);
+}
+
 io.on("connection", (socket) => {
-  // User muốn giữ (lock) xe
+  /* --------- A) LOCK/UNLOCK VEHICLE --------- */
   socket.on("lock_vehicle", (vehicleId) => {
     if (!vehicleLocks.has(vehicleId)) {
       vehicleLocks.set(vehicleId, socket.id);
@@ -34,7 +54,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // User bỏ giữ (unlock) xe
   socket.on("unlock_vehicle", (vehicleId) => {
     if (vehicleLocks.get(vehicleId) === socket.id) {
       vehicleLocks.delete(vehicleId);
@@ -42,30 +61,93 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Khi user mất kết nối, tự động giải phóng xe đang giữ
+  /* --------- B) CHAT REALTIME --------- */
+  // Client gửi khi mở widget / trang admin
+  // payload: { conversationId, isAdmin?, nickname? }
+  socket.on("join", ({ conversationId, isAdmin = false, nickname = "Guest" } = {}) => {
+    if (!conversationId) return;
+    socket.data.conversationId = conversationId;
+    socket.data.isAdmin = !!isAdmin;
+    socket.data.nickname = nickname;
+
+    const room = getRoom(conversationId);
+    room.participants.add(socket.id);
+    socket.join(conversationId);
+
+    // gửi lại lịch sử (tối đa 50 tin)
+    const history = room.history.slice(-50);
+    socket.emit("history", history);
+
+    // thông báo hiện diện (nếu cần dùng phía client)
+    io.to(conversationId).emit("presence", { type: "join", nickname });
+  });
+
+  // Gửi tin nhắn: { text, from }  (from: 'me' | 'admin' ...)
+  socket.on("message", ({ text, from } = {}) => {
+    const conv = socket.data.conversationId;
+    if (!conv || !text) return;
+
+    const msg = { id: uuidv4(), from, text, ts: Date.now() };
+    const room = getRoom(conv);
+
+    room.history.push(msg);
+    if (room.history.length > 200) room.history.shift(); // hạn chế bộ nhớ
+
+    io.to(conv).emit("message", msg);
+  });
+
+  // Typing indicator
+  socket.on("typing", ({ from, isTyping } = {}) => {
+    const conv = socket.data.conversationId;
+    if (!conv) return;
+    socket.to(conv).emit("typing", { from, isTyping });
+  });
+
+  // Admin: liệt kê các cuộc trò chuyện đang có
+  socket.on("admin:list-conversations", () => {
+    if (!socket.data.isAdmin) return;
+    const list = Array.from(rooms.keys()).map((id) => ({
+      id,
+      lastTs: rooms.get(id).history.at(-1)?.ts || 0,
+      lastText: rooms.get(id).history.at(-1)?.text || "",
+    }));
+    socket.emit("admin:conversations", list.sort((a, b) => b.lastTs - a.lastTs));
+  });
+
+  /* --------- C) CLEANUP khi disconnect --------- */
   socket.on("disconnect", () => {
+    // giải phóng xe
     for (const [vehicleId, lockerSocketId] of vehicleLocks.entries()) {
       if (lockerSocketId === socket.id) {
         vehicleLocks.delete(vehicleId);
         socket.broadcast.emit("vehicle_unlocked", vehicleId);
       }
     }
+
+    // rời phòng chat
+    const conv = socket.data?.conversationId;
+    if (conv && rooms.has(conv)) {
+      const room = rooms.get(conv);
+      room.participants.delete(socket.id);
+      // nếu muốn dọn lịch sử khi không còn ai và không có tin nào, bật dòng dưới
+      // if (room.participants.size === 0 && room.history.length === 0) rooms.delete(conv);
+    }
   });
 });
-// --- END: Quản lý giữ xe tạm thời ---
+// --- END SOCKET FEATURES ---
 
 // ✅ Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Thêm express-session middleware để lưu captcha trong session
+// session để lưu captcha (hoặc mục đích khác)
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "your-secret-key",
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }, // true nếu bạn dùng HTTPS
+    cookie: { secure: false }, // true nếu dùng HTTPS/Proxy thiết lập trust
   })
 );
 
@@ -109,15 +191,14 @@ app.use("/api/qr", qrRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/surcharges", surchargeRoutes);
 app.use("/api/vehicletype", vehicletype);
-// Gắn route captcha
 app.use("/api/captcha", captchaRoute);
 
-// ✅ Middleware lỗi 404
+// ✅ 404
 app.use((req, res, next) => {
   res.status(404).json({ error: "Không tìm thấy API" });
 });
 
-// ✅ Middleware lỗi chung
+// ✅ Error handler
 app.use((err, req, res, next) => {
   console.error("Lỗi:", err.message);
   res.status(err.status || 500).json({
