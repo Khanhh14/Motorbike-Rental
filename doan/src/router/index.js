@@ -21,6 +21,7 @@ import SurchargesAdmin from "@/components/SurchargesAdmin.vue";
 import SurchargeLookup from "@/components/SurchargeLookup.vue";
 import ChangePassword from "@/components/ChangePassword.vue";
 import VehicleTypeAdmin from "@/components/VehicleTypeAdmin.vue";
+import ChatAdmin from "@/components/ChatAdmin.vue";
 
 const routes = [
   {
@@ -95,6 +96,11 @@ const routes = [
     component: AdminView,
     meta: { requiresAuth: true, requiresAdmin: true },
     children: [
+      {
+        path: "chatadmin",
+        name: "chatadmin",
+        component: ChatAdmin,
+      },
       {
         path: "vehicle-type",
         name: "vehicle-type-admin",
