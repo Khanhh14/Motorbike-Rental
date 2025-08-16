@@ -89,7 +89,7 @@
 
 <script>
 import axios from 'axios';
-import PaymentModal from '@/components/PaymentModal.vue'; // cập nhật path đúng với dự án của bạn
+import PaymentModal from '@/components/PaymentModal.vue'; 
 
 export default {
   components: {
