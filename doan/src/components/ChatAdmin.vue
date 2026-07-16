@@ -1,52 +1,79 @@
 <template>
-  <div class="wrap">
-    <div class="left">
-      <div class="panel-head">
-        <strong>Hỗ trợ khách hàng</strong>
-        <button class="btn" @click="fetchConvs">Làm mới</button>
+  <div class="chat-page">
+    <header class="hero">
+      <div class="hero-left">
+        <h1>Hello, Admin <span class="wave">👋</span></h1>
+        <p class="sub">Bảng điều khiển hỗ trợ khách hàng</p>
       </div>
-
-      <ul class="list">
-        <li v-if="loading" class="item">Đang tải...</li>
-        <li v-else-if="filteredConvs.length === 0" class="item">Hiện chưa có khách nào đang chat</li>
-
-        <li v-for="c in filteredConvs" :key="c.id">
-          <button class="item" @click="selectConv(c.id)">
-            <div class="id">
-              {{ shortId(c.id) }}
-              <span v-if="c.onlineCount > 0" title="đang online">•</span>
-            </div>
-            <div class="last" :title="c.lastText">{{ c.lastText || "—" }}</div>
-          </button>
-        </li>
-      </ul>
-    </div>
-
-    <div class="right">
-      <div class="room-head">
-        <strong>Phòng:</strong>
-        <span class="room-id">{{ activeConv || "—" }}</span>
+      <div class="hero-right">
+        <div class="profile">A</div>
       </div>
+    </header>
 
-      <div ref="scrollEl" class="room-body">
-        <div
-          v-for="m in messages"
-          :key="m.id"
-          class="row"
-          :class="m.from === 'admin' ? 'me' : 'peer'"
-        >
-          <div class="bubble">
-            <div class="text">{{ m.text }}</div>
-            <div class="time">{{ new Date(m.ts).toLocaleTimeString() }}</div>
+    <main class="card-grid">
+      <aside class="panel contacts">
+        <div class="contacts-head">
+          <input v-model="q" class="search" placeholder="Tìm kiếm khách hoặc tin nhắn..." />
+          <button class="icon-btn" @click="fetchConvs" title="Làm mới">⟳</button>
+        </div>
+
+        <ul class="contacts-list">
+          <li v-if="loading" class="empty">Đang tải...</li>
+          <li v-else-if="filteredConvs.length === 0" class="empty">Không có cuộc trò chuyện</li>
+
+          <li v-for="c in filteredConvs" :key="c.id">
+            <button class="contact" :class="{ active: activeConv === c.id }" @click="selectConv(c.id)">
+              <div class="avatar">{{ (c.customerName||'K').charAt(0).toUpperCase() }}</div>
+              <div class="info">
+                <div class="top">
+                  <div class="name">{{ c.customerName || shortId(c.id) }}</div>
+                  <div class="small">{{ c.lastAt ? new Date(c.lastAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '' }}</div>
+                </div>
+                <div class="preview">{{ c.lastText || 'Chào bạn!' }}</div>
+              </div>
+              <div class="meta">
+                <span class="dot" v-if="c.onlineCount>0" title="Online">●</span>
+                <span class="unread" v-if="c.unreadCount">{{ c.unreadCount }}</span>
+              </div>
+            </button>
+          </li>
+        </ul>
+      </aside>
+
+      <section class="panel chat">
+        <div class="chat-head">
+          <div class="chat-avatar">{{ (activeConversation && activeConversation.customerName) ? activeConversation.customerName.charAt(0).toUpperCase() : 'K' }}</div>
+          <div class="chat-title">
+            <div class="name">{{ activeConversation?.customerName || shortId(activeConv) || 'Chọn một khách' }}</div>
+            <div class="status">{{ activeConversation ? (activeConversation.onlineCount>0 ? 'Online' : 'Offline') : '—' }}</div>
+          </div>
+          <div class="chat-actions">
+            <button class="icon-btn" @click="fetchConvs">⟳</button>
           </div>
         </div>
-      </div>
 
-      <form v-if="activeConv" class="room-input" @submit.prevent="send">
-        <input v-model="draft" type="text" placeholder="Trả lời khách..." />
-        <button :disabled="!draft.trim()">Gửi</button>
-      </form>
-    </div>
+        <div ref="scrollEl" class="chat-body">
+          <div v-if="!activeConv" class="empty-chat">Chọn một cuộc trò chuyện bên trái để bắt đầu.</div>
+
+          <template v-else>
+            <div v-if="messages.length === 0" class="empty-chat">Chưa có tin nhắn — hãy gửi lời chào 👋</div>
+
+            <div v-for="(m, idx) in messages" :key="m.id" class="msg" :class="m.from === 'admin' ? 'out' : 'in'">
+              <div class="bubble">
+                <div class="text">{{ m.text }}</div>
+                <div class="time">{{ fmtTime(m.ts) }}</div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <form v-if="activeConv" class="chat-input" @submit.prevent="send">
+          <button type="button" class="icon-btn">😊</button>
+          <input v-model="draft" placeholder="Nhập trả lời..." />
+          <button class="send" :disabled="!draft.trim()">➤</button>
+        </form>
+      </section>
+    </main>
   </div>
 </template>
 
@@ -60,11 +87,30 @@ const loading = ref(false)
 const activeConv = ref(null)
 const messages = ref([])
 const draft = ref("")
+const q = ref("")
 const scrollEl = ref(null)
 
-const filteredConvs = computed(() =>
-  conversations.value.filter((c) => c.hasCustomer)
-)
+const filteredConvs = computed(() => {
+  const term = (q.value || "").trim().toLowerCase()
+  return conversations.value
+    .filter((c) => c.hasCustomer)
+    .filter((c) => {
+      if (!term) return true
+      return (
+        (c.customerName && c.customerName.toLowerCase().includes(term)) ||
+        (c.lastText && c.lastText.toLowerCase().includes(term)) ||
+        (c.id && c.id.toLowerCase().includes(term))
+      )
+    })
+})
+
+const activeConversation = computed(() => conversations.value.find((c) => c.id === activeConv.value) || null)
+
+function fmtTime(ts){
+  try{
+    return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }catch(e){ return '' }
+}
 
 function shortId(id) {
   return id && id.length > 12 ? `${id.slice(0, 8)}…${id.slice(-2)}` : id
