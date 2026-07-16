@@ -69,16 +69,32 @@ exports.getUserRentals = async (req, res) => {
 
     const [results] = await db.query(sql, [user_id]);
 
-    // ✅ Trả về cả danh sách và tổng số
+    // Chuẩn hóa đường dẫn ảnh cho từng đơn thuê
+    const normalizeImageUrl = (value) => {
+      if (!value) return null;
+
+      const trimmed = value.toString().trim();
+      if (!trimmed) return null;
+
+      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        return trimmed;
+      }
+
+      const withoutLeadingSlash = trimmed.replace(/^\/+/, "");
+      if (withoutLeadingSlash.startsWith("uploads/")) {
+        return `${imageBaseUrl}/${withoutLeadingSlash}`;
+      }
+
+      return `${imageBaseUrl}/uploads/${withoutLeadingSlash}`;
+    };
+
     results.forEach(result => {
-      // Cập nhật lại URL hình ảnh với đường dẫn đầy đủ
-      result.motorbike_image = `${imageBaseUrl}/uploads/${result.motorbike_image}`;
+      result.motorbike_image = normalizeImageUrl(result.motorbike_image);
     });
 
-    res.status(200).json({
-      total: results.length,  // Tổng số xe đã thuê
-      rentals: results        // Danh sách đơn thuê
-    });
+    // ✅ TRẢ THẲNG MẢNG RESULTS (Để frontend nhận đúng Array và thực hiện slice được)
+    res.status(200).json(results);
+    
   } catch (err) {
     console.error("❌ Lỗi khi lấy đơn thuê của người dùng:", err);
     res.status(500).json({ message: "Lỗi server!" });
