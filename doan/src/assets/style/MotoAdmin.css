@@ -1,271 +1,263 @@
-/* ========== Bảng danh sách xe máy ========== */
+/* --- TỔNG THỂ --- */
+.motor-admin-container,
 .motorbike-table {
-  background: white;
-  padding: 20px;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 24px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1e293b;
+  box-sizing: border-box;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.title, h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.btn-primary, button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #2563eb;
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+/* --- KHỐI THỐNG KÊ (SỬA LỖI DÍNH CHỮ) --- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: #ffffff;
+  padding: 18px 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-card.blue .stat-icon { background: #eff6ff; color: #2563eb; }
+.stat-card.green .stat-icon { background: #f0fdf4; color: #16a34a; }
+.stat-card.orange .stat-icon { background: #fff7ed; color: #ea580c; }
+.stat-card.red .stat-icon { background: #fef2f2; color: #dc2626; }
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* --- TOOLBAR & SEARCH --- */
+.card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+
+.table-toolbar, .actions {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.search-box, .search-filter-group {
+  display: flex;
+  gap: 12px;
+  position: relative;
+  flex: 1;
+  max-width: 450px;
+}
+
+.search-box input, .search-filter-group input {
+  width: 100%;
+  padding: 9px 16px 9px 36px;
+  font-size: 0.9rem;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
-  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+  outline: none;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.select-filter, .search-filter-group select {
+  padding: 9px 16px;
+  font-size: 0.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: #ffffff;
+  outline: none;
+  cursor: pointer;
+}
+
+/* --- BẢNG DỮ LIỆU & SỬA LỖI ẢNH XE --- */
+.table-responsive {
   width: 100%;
   overflow-x: auto;
 }
 
-/* Thanh tìm kiếm & bộ lọc */
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  gap: 10px;
-}
-
-.search-filter-group {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-
-input, select {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  width: 200px;
-  font-size: 14px;
-}
-
-/* Nút bấm chung */
-button {
-  padding: 8px 12px;
-  border: none;
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-button:hover {
-  background-color: #0056b3;
-}
-.action-buttons {
-  display: inline-flex;
-  gap: 8px; /* Khoảng cách giữa hai nút */
-  align-items: center; /* Căn giữa theo chiều dọc */
-}
-ss
-/* Nút Sửa */
-.edit-button {
-  background-color: #007bff;
-  color: white;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.edit-button:hover {
-  background-color: #0056b3;
-}
-
-/* Nút Xóa */
-.delete-button {
-  background-color: #dc3545;
-  color: white;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.delete-button:hover {
-  background-color: #c82333;
-}
-
-
-/* Bảng hiển thị danh sách */
-table {
+.custom-table, table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 600px;
-}
-
-th, td {
-  padding: 12px;
-  border-bottom: 1px solid #ddd;
   text-align: left;
-  white-space: nowrap;
 }
 
-th {
-  background: #f4f4f4;
+.custom-table th, table th {
+  background-color: #f8fafc;
+  padding: 14px 18px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #475569;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-/* Trạng thái xe */
-.available { color: green; font-weight: bold; }
-.rented { color: red; font-weight: bold; }
-.maintenance { color: gray; font-weight: bold; }
-
-/* Ảnh xe */
-.bike-image {
-  width: 100px;
-  height: auto;
-  border-radius: 5px;
+.custom-table td, table td {
+  padding: 12px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+  vertical-align: middle;
 }
 
-.description-cell {
-  max-width: 300px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-/* ========== Modal Chỉnh Sửa Xe ========== */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  padding: 25px;
+/* ÉP KÍCH THƯỚC ẢNH XE CHUẨN - KHÔNG BỊ TRÀN */
+.bike-img-thumb, td img, .bike-image {
+  width: 80px !important;
+  height: 60px !important;
+  max-width: 80px !important;
+  max-height: 60px !important;
+  object-fit: contain !important;
   border-radius: 8px;
-  width: 600px;
-  max-width: 90%;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-  position: relative;
-  animation: fadeIn 0.3s ease-in-out;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: block;
 }
 
-.modal-body {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
+.col-id {
+  font-weight: 600;
+  color: #64748b;
 }
 
-.modal-left, .modal-right {
-  flex: 1;
+.bike-title-info {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
-.modal-content select,
-.modal-content input,
-.modal-content textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 14px;
+.bike-model {
+  font-weight: 700;
+  color: #0f172a;
 }
 
-.modal-content textarea {
-  height: 80px;
-  resize: vertical;
+.bike-brand {
+  font-size: 0.8rem;
+  color: #64748b;
 }
 
-.modal-buttons {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-}
-
-.modal-buttons button {
-  flex: 1;
-  margin: 0 5px;
-}
-
-/* Hiệu ứng xuất hiện */
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-/* Nút đóng modal */
-.close-modal {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  font-size: 20px;
-  cursor: pointer;
-  color: #666;
-}
-.close-modal:hover { color: black; }
-
-/* ========== Upload file ========== */
-.file-upload {
-  display: flex;
+/* BADGE TRẠNG THÁI */
+.status-badge, .available, .rented, .maintenance {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
-.file-name-input {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: #f9f9f9;
-}
+.available { background: #f0fdf4; color: #15803d; }
+.rented { background: #fff7ed; color: #c2410c; }
+.maintenance { background: #fef2f2; color: #b91c1c; }
 
-.file-label {
-  padding: 8px 12px;
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-.file-label:hover {
-  background-color: #0056b3;
-}
-
-.hidden-file-input { display: none; }
-
-/* ========== Phân trang ========== */
-.pagination {
+/* THAO TÁC */
+.action-buttons {
   display: flex;
+  gap: 6px;
   justify-content: center;
-  margin-top: 10px;
 }
 
-.pagination button {
-  padding: 5px 10px;
-  margin: 0 5px;
-  border: none;
-  background: #007bff;
-  color: white;
-  cursor: pointer;
-  border-radius: 5px;
+.edit-button, .btn-action.edit {
+  background-color: #eff6ff;
+  color: #2563eb;
+  padding: 6px 12px;
+  border-radius: 6px;
 }
 
-.pagination button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
+.delete-button, .btn-action.delete {
+  background-color: #fef2f2;
+  color: #dc2626;
+  padding: 6px 12px;
+  border-radius: 6px;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .modal-body {
-    flex-direction: column;
-  }
-  .modal-content {
-    width: 90%;
-  }
-  .modal-buttons {
-    flex-direction: column;
-    gap: 10px;
-  }
-  button {
-    width: 100%;
-  }
+/* PHÂN TRANG */
+.pagination {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
 }
