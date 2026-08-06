@@ -34,8 +34,6 @@
             <button type="button" class="signup-button" @click="goToSignUp">Đăng Ký</button>
           </div>
         </form>
-
-        <p v-if="message" :class="{ success: success, error: !success }">{{ message }}</p>
       </div>
 
       <div class="illustration-area">
@@ -47,8 +45,7 @@
 
 <script>
 import axios from "axios";
-import "@/assets/style/Login.css";
-import { mapActions } from "pinia";
+import { useToast } from "vue-toastification";
 
 export default {
   name: "LoginForm",
@@ -57,10 +54,12 @@ export default {
       name: "",
       password: "",
       rememberMe: false,
-      message: "",
-      success: false,
       loading: false,
     };
+  },
+  setup() {
+    const toast = useToast();
+    return { toast };
   },
   async mounted() {
     // Đảm bảo token không bị mất sau khi refresh trang
@@ -72,7 +71,6 @@ export default {
   methods: {
     async handleLogin() {
       this.loading = true;
-      this.message = "";
 
       try {
         console.log("Đang gửi request đăng nhập...");
@@ -100,8 +98,8 @@ export default {
         // Thiết lập header mặc định cho axios
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-        this.message = "Đăng nhập thành công!";
-        this.success = true;
+        // Thông báo qua Toast
+        this.toast.success("Đăng nhập thành công!");
 
         // Chuyển hướng theo role
         setTimeout(() => {
@@ -109,8 +107,10 @@ export default {
         }, 1500);
       } catch (error) {
         console.error("Lỗi đăng nhập:", error.response?.data || error.message);
-        this.message = error.response?.data?.message || "Lỗi đăng nhập!";
-        this.success = false;
+        const errorMsg = error.response?.data?.message || error.message || "Đăng nhập thất bại!";
+        
+        // Thông báo qua Toast
+        this.toast.error(errorMsg);
       } finally {
         this.loading = false;
       }
@@ -124,4 +124,5 @@ export default {
 
 <style scoped>
 @import "@/assets/style/Login.css";
+@import "@/assets/style/Toast.css";
 </style>

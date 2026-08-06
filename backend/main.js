@@ -23,7 +23,6 @@ const io = new Server(server, {
 
 // ====== In-memory stores ======
 const vehicleLocks = new Map(); // giữ xe tạm thời
-// rooms: Map<conversationId, { history:Array, participants:Set }>
 const rooms = new Map();
 
 function getRoom(id) {
@@ -57,36 +56,27 @@ io.on("connection", function (socket) {
   });
 
   // ---------- B) CHAT REALTIME ----------
-  // Client join phòng: payload { conversationId, isAdmin?, nickname? }
-  socket.on(
-    "join",
-    function (payload) {
-      // payload mặc định
-      payload = payload || {};
-      var conversationId = payload.conversationId;
-      var isAdmin = !!payload.isAdmin;
-      var nickname = payload.nickname || "Guest";
+  socket.on("join", function (payload) {
+    payload = payload || {};
+    var conversationId = payload.conversationId;
+    var isAdmin = !!payload.isAdmin;
+    var nickname = payload.nickname || "Guest";
 
-      if (!conversationId) return;
+    if (!conversationId) return;
 
-      socket.data.conversationId = conversationId;
-      socket.data.isAdmin = isAdmin;
-      socket.data.nickname = nickname;
+    socket.data.conversationId = conversationId;
+    socket.data.isAdmin = isAdmin;
+    socket.data.nickname = nickname;
 
-      var room = getRoom(conversationId);
-      room.participants.add(socket.id);
-      socket.join(conversationId);
+    var room = getRoom(conversationId);
+    room.participants.add(socket.id);
+    socket.join(conversationId);
 
-      // gửi lịch sử gần nhất
-      socket.emit("history", room.history.slice(-50));
+    socket.emit("history", room.history.slice(-50));
+    io.to(conversationId).emit("presence", { type: "join", nickname: nickname });
+    io.emit("rooms:update");
+  });
 
-      // thông báo + yêu cầu FE refresh list
-      io.to(conversationId).emit("presence", { type: "join", nickname: nickname });
-      io.emit("rooms:update");
-    }
-  );
-
-  // Gửi tin nhắn: payload { text, from }
   socket.on("message", function (payload) {
     payload = payload || {};
     var text = payload.text;
@@ -104,10 +94,9 @@ io.on("connection", function (socket) {
     }
 
     io.to(conv).emit("message", msg);
-    io.emit("rooms:update"); // cập nhật list ở admin
+    io.emit("rooms:update");
   });
 
-  // Typing indicator
   socket.on("typing", function (payload) {
     payload = payload || {};
     var from = payload.from;
@@ -119,13 +108,12 @@ io.on("connection", function (socket) {
     socket.to(conv).emit("typing", { from: from, isTyping: isTyping });
   });
 
-  // Admin: danh sách cuộc trò chuyện
   socket.on("admin:list-conversations", function () {
     if (!(socket.data && socket.data.isAdmin)) return;
 
     var list = Array.from(rooms.keys())
       .filter(function (id) {
-        return id !== "admin-dashboard"; // bỏ phòng hệ thống
+        return id !== "admin-dashboard";
       })
       .map(function (id) {
         var room = rooms.get(id);
@@ -161,7 +149,6 @@ io.on("connection", function (socket) {
 
   // ---------- C) CLEANUP ----------
   socket.on("disconnect", function () {
-    // giải phóng xe
     for (const [vehicleId, lockerSocketId] of vehicleLocks.entries()) {
       if (lockerSocketId === socket.id) {
         vehicleLocks.delete(vehicleId);
@@ -169,13 +156,10 @@ io.on("connection", function (socket) {
       }
     }
 
-    // rời phòng chat
     var conv = socket.data && socket.data.conversationId;
     if (conv && rooms.has(conv)) {
       var room = rooms.get(conv);
       room.participants.delete(socket.id);
-      // nếu muốn dọn phòng rỗng:
-      // if (room.participants.size === 0 && room.history.length === 0) rooms.delete(conv);
       io.emit("rooms:update");
     }
   });
@@ -186,6 +170,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// 1. CORS
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  })
+);
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "your-secret-key",
@@ -195,21 +188,15 @@ app.use(
   })
 );
 
+// 2. Cấu hình Static Folder: Trỏ đường dẫn /uploads trực tiếp vào public/uploads
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
-
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  })
-);
+app.use("/public/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 app.get("/favicon.ico", function (req, res) {
   return res.status(204).end();
 });
 
-// ===== Routes (giữ nguyên của bạn) =====
+// ===== Routes =====
 const authRoutes = require("./src/routes/auth.routes");
 const motorbikeRoutes = require("./src/routes/motorbike.routes");
 const rentalRoutes = require("./src/routes/rental.routes");

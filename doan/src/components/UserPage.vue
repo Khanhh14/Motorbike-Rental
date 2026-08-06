@@ -71,8 +71,14 @@
                 :src="getRentalImage(rental)"
                 :alt="`Ảnh xe ${rental.motorbike_model || rental.vehicle_name || ''}`"
                 class="motorbike-img"
+                loading="lazy"
+                :title="getRentalImage(rental)"
               />
-              <div v-else class="img-fallback">🏍️</div>
+
+              <div v-else class="img-fallback">
+                <div>🏍️</div>
+                <div class="model-name">{{ rental.motorbike_model || 'Xe' }}</div>
+              </div>
             </div>
 
             <div class="rental-details">
@@ -88,6 +94,7 @@
                 {{ statusLabel(rental.status) }}
               </span>
             </div>
+
           </li>
         </ul>
       </section>
@@ -120,6 +127,15 @@ export default {
 
     const rentedCars = ref([]);
 
+    // Lightweight wrapper to automatically add Authorization header using the store token
+    const apiFetchSafe = async (url, options = {}) => {
+      const token = authStore.token || localStorage.getItem('token');
+      const headers = Object.assign({}, options.headers || {});
+      if (token) headers.Authorization = 'Bearer ' + token;
+      if (!headers['Content-Type']) headers['Content-Type'] = 'application/json';
+      return fetch(url, Object.assign({}, options, { headers }));
+    };
+
     const fetchUserInfo = async () => {
       const token = authStore.token;
       if (!token) {
@@ -128,11 +144,7 @@ export default {
       }
 
       try {
-        const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const response = await apiFetchSafe(`${BACKEND_URL}/api/auth/me`);
 
         const contentType = response.headers.get("Content-Type");
         if (contentType && contentType.includes("application/json")) {
@@ -154,16 +166,12 @@ export default {
       if (!token) return;
 
       try {
-        const response = await fetch(`${BACKEND_URL}/api/rentals/user-rentals`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const response = await apiFetchSafe(`${BACKEND_URL}/api/rentals/user-rentals`);
 
         const contentType = response.headers.get("Content-Type");
         if (contentType && contentType.includes("application/json")) {
           const data = await response.json();
-          console.log("Danh sách đơn thuê:", data); // Check xem trường ảnh là gì ở đây (ví dụ: motorbike_image)
+          console.log("Danh sách đơn thuê:", data);
           rentedCars.value = data;
         } else {
           console.error("Dữ liệu trả về không phải JSON");
@@ -183,7 +191,6 @@ export default {
       const d = new Date(dateStr);
       return d.toLocaleDateString("vi-VN");
     };
-
 
     const getRentalImage = (rental) => {
       const rawImage =
@@ -258,7 +265,4 @@ export default {
 
 <style scoped>
 @import "@/assets/style/UserPage.css";
-
 </style>
-
-

@@ -12,10 +12,7 @@ const authMiddleware = authenticateJWT;
 // Dùng cookie-parser nếu cần (dù hiện tại đang dùng token)
 router.use(cookieParser());
 
-/**
- * ✅ API cho ADMIN: lấy tất cả đơn thuê
- * (GET /api/rentals)
- */
+
 router.get("/", authMiddleware, rentalController.getRentals);
 
 /**

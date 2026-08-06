@@ -4,6 +4,25 @@ const { sendRentalAcceptedEmail, sendRentalRejectedEmail } = require("../utils/m
 
 const imageBaseUrl = "http://localhost:5000"; // Hoặc có thể sử dụng URL từ biến môi trường
 
+// Hàm trợ giúp chuẩn hóa URL ảnh cho các xe
+const normalizeImageUrl = (value) => {
+  if (!value) return null;
+
+  const trimmed = value.toString().trim();
+  if (!trimmed) return null;
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+
+  const withoutLeadingSlash = trimmed.replace(/^\/+/, "");
+  if (withoutLeadingSlash.startsWith("uploads/")) {
+    return `${imageBaseUrl}/${withoutLeadingSlash}`;
+  }
+
+  return `${imageBaseUrl}/uploads/${withoutLeadingSlash}`;
+};
+
 exports.getRentals = async (req, res) => {
   try {
     const query = `
@@ -11,6 +30,7 @@ exports.getRentals = async (req, res) => {
         rentals.id, 
         users.name AS renter_name,
         motorbikes.model AS motorbike_model,
+        motorbikes.image_url AS motorbike_image,
         rentals.start_date,
         rentals.end_date,
         rentals.total_price,
@@ -21,6 +41,9 @@ exports.getRentals = async (req, res) => {
     `;
 
     const [rows] = await db.query(query);
+    rows.forEach(row => {
+      row.motorbike_image = normalizeImageUrl(row.motorbike_image);
+    });
     res.json(rows);
   } catch (error) {
     console.error("Lỗi lấy danh sách đơn thuê:", error);
@@ -32,9 +55,15 @@ exports.getRentals = async (req, res) => {
 // 📌 Hàm dùng cho route truyền userId từ cookie/middleware
 exports.getUserRentalsById = async (userId) => {
   const query = `
-      SELECT rentals.id, users.name AS renter_name, motorbikes.model AS motorbike_model,
-             motorbikes.id AS motorbike_id,  -- ✅ thêm dòng này
-             rentals.start_date, rentals.end_date, rentals.total_price, rentals.status
+      SELECT rentals.id, 
+             users.name AS renter_name, 
+             motorbikes.model AS motorbike_model,
+             motorbikes.image_url AS motorbike_image, -- ✅ Đã thêm lấy cột ảnh
+             motorbikes.id AS motorbike_id,
+             rentals.start_date, 
+             rentals.end_date, 
+             rentals.total_price, 
+             rentals.status
       FROM rentals
       JOIN motorbikes ON rentals.motorbike_id = motorbikes.id
       JOIN users ON rentals.user_id = users.id
@@ -42,6 +71,12 @@ exports.getUserRentalsById = async (userId) => {
       ORDER BY rentals.start_date DESC
     `;
   const [rows] = await db.query(query, [userId]);
+  
+  // Chuẩn hóa đường dẫn ảnh
+  rows.forEach(row => {
+    row.motorbike_image = normalizeImageUrl(row.motorbike_image);
+  });
+
   return rows;
 };
 
@@ -69,30 +104,10 @@ exports.getUserRentals = async (req, res) => {
 
     const [results] = await db.query(sql, [user_id]);
 
-    // Chuẩn hóa đường dẫn ảnh cho từng đơn thuê
-    const normalizeImageUrl = (value) => {
-      if (!value) return null;
-
-      const trimmed = value.toString().trim();
-      if (!trimmed) return null;
-
-      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-        return trimmed;
-      }
-
-      const withoutLeadingSlash = trimmed.replace(/^\/+/, "");
-      if (withoutLeadingSlash.startsWith("uploads/")) {
-        return `${imageBaseUrl}/${withoutLeadingSlash}`;
-      }
-
-      return `${imageBaseUrl}/uploads/${withoutLeadingSlash}`;
-    };
-
     results.forEach(result => {
       result.motorbike_image = normalizeImageUrl(result.motorbike_image);
     });
 
-    // ✅ TRẢ THẲNG MẢNG RESULTS (Để frontend nhận đúng Array và thực hiện slice được)
     res.status(200).json(results);
     
   } catch (err) {
@@ -110,7 +125,7 @@ exports.getRentalById = async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      `SELECT rentals.*, motorbikes.model AS motorbike_model
+      `SELECT rentals.*, motorbikes.model AS motorbike_model, motorbikes.image_url AS motorbike_image
        FROM rentals
        JOIN motorbikes ON rentals.motorbike_id = motorbikes.id
        WHERE rentals.id = ? AND rentals.user_id = ?`,
@@ -121,6 +136,8 @@ exports.getRentalById = async (req, res) => {
       return res.status(404).json({ error: "Không tìm thấy đơn thuê" });
     }
 
+    rows[0].motorbike_image = normalizeImageUrl(rows[0].motorbike_image);
+
     res.json(rows[0]);
   } catch (error) {
     console.error("Lỗi lấy chi tiết đơn thuê:", error);
@@ -129,7 +146,6 @@ exports.getRentalById = async (req, res) => {
 };
 
 
-// ✅ Tạo đơn thuê mới
 // ✅ Tạo đơn thuê mới
 exports.createRental = async ({ body }) => {
   try {
@@ -327,4 +343,3 @@ cron.schedule("* * * * *", autoUpdateRentalStatus, {
   scheduled: true,
   timezone: "Asia/Ho_Chi_Minh",
 });
-

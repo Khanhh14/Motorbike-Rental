@@ -89,7 +89,6 @@
               </span>
             </div>
             <p v-if="totalPrice > 0 && totalPrice < 50000" class="warning">⚠️ Giá thuê tối thiểu là 50,000 VNĐ.</p>
-            <p v-if="errorMessage" class="error">⚠️ {{ errorMessage }}</p>
           </div>
 
           <div class="form-actions">
@@ -126,8 +125,24 @@
   </div>
 </template>
 
-<script src="./MotorDetail.js"></script>
+<script>
+import MotorDetailScript from "./MotorDetail.js";
+import { useToast } from "vue-toastification";
+
+export default {
+  ...MotorDetailScript,
+  setup() {
+    const toast = useToast();
+    const scriptSetup = MotorDetailScript.setup ? MotorDetailScript.setup() : {};
+    return {
+      ...scriptSetup,
+      toast
+    };
+  }
+};
+</script>
 
 <style scoped>
-  @import "@/assets/style/MotorDetail.css";
+@import "@/assets/style/MotorDetail.css";
+@import "@/assets/style/Toast.css";
 </style>

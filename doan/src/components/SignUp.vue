@@ -72,23 +72,23 @@
 
         <!-- Captcha -->
         <div class="form-group captcha-group">
-  <label for="captchaInput">Nhập mã xác thực</label>
+          <label for="captchaInput">Nhập mã xác thực</label>
 
-  <div class="captcha-row">
-    <div class="captcha-image" v-html="captchaSvg"></div>
-    <button type="button" class="btn-refresh-captcha" @click="loadCaptcha" title="Tải lại captcha">↻</button>
-  </div>
+          <div class="captcha-row">
+            <div class="captcha-image" v-html="captchaSvg"></div>
+            <button type="button" class="btn-refresh-captcha" @click="loadCaptcha" title="Tải lại captcha">↻</button>
+          </div>
 
-  <input
-    type="text"
-    id="captchaInput"
-    v-model="captchaInput"
-    placeholder="Nhập mã captcha"
-    required
-    @input="clearValidity('captchaInput')"
-  />
-  <span v-if="errors.captchaInput" class="error">{{ errors.captchaInput }}</span>
-</div>
+          <input
+            type="text"
+            id="captchaInput"
+            v-model="captchaInput"
+            placeholder="Nhập mã captcha"
+            required
+            @input="clearValidity('captchaInput')"
+          />
+          <span v-if="errors.captchaInput" class="error">{{ errors.captchaInput }}</span>
+        </div>
 
         <!-- Nút Sign Up & Login -->
         <div class="button-group">
@@ -102,8 +102,10 @@
 
 <script>
 import axios from "axios";
+import { useToast } from "vue-toastification";
 
 export default {
+  name: "SignUp",
   data() {
     return {
       form: {
@@ -119,6 +121,10 @@ export default {
       success: false,
       errors: {}, // Lưu lỗi cụ thể cho từng input
     };
+  },
+  setup() {
+    const toast = useToast();
+    return { toast };
   },
   methods: {
     async loadCaptcha() {
@@ -169,12 +175,18 @@ export default {
         this.errors.captchaInput = "Vui lòng nhập mã captcha!";
       }
 
-      return Object.keys(this.errors).length === 0; // Trả về true nếu không có lỗi
+      const isValid = Object.keys(this.errors).length === 0;
+      if (!isValid) {
+        this.toast.error("Vui lòng kiểm tra lại thông tin đăng ký!");
+      }
+
+      return isValid;
     },
 
     clearValidity(field) {
       // Xóa lỗi hiển thị trên input khi người dùng nhập lại
-      document.getElementById(field).setCustomValidity("");
+      const el = document.getElementById(field);
+      if (el) el.setCustomValidity("");
       if (this.errors[field]) {
         delete this.errors[field];
       }
@@ -200,15 +212,16 @@ export default {
         });
 
         // Nếu đăng ký thành công
-        this.message = response.data.message;
+        this.message = response.data.message || "Đăng ký thành công!";
         this.success = true;
+        this.toast.success(this.message);
 
         // Xóa dữ liệu form sau khi đăng ký thành công
         this.form = { name: "", email: "", phone: "", password: "" };
         this.captchaInput = "";
         await this.loadCaptcha(); // Tải lại captcha mới
 
-        // Chuyển hướng sau 2 giây (tùy chọn)
+        // Chuyển hướng sau 2 giây
         setTimeout(() => {
           this.$router.push("/login");
         }, 2000);
@@ -219,15 +232,18 @@ export default {
 
           if (field && document.getElementById(field)) {
             // Gán thông báo lỗi vào input để hiển thị tooltip
-            document.getElementById(field).setCustomValidity(message);
+            document.getElementById(field).setCustomValidity(message || "Thông tin không hợp lệ");
             document.getElementById(field).reportValidity();
 
             this.errors[field] = message;
+            this.toast.error(message || "Đăng ký thất bại!");
           } else {
-            this.message = message; // Lỗi chung
+            this.message = message || "Đăng ký thất bại!";
+            this.toast.error(this.message);
           }
         } else {
           this.message = "Lỗi không xác định!";
+          this.toast.error(this.message);
         }
 
         // Nếu captcha lỗi thì tải lại captcha mới
@@ -246,4 +262,5 @@ export default {
 
 <style scoped>
 @import "@/assets/style/SignUp.css";
+@import "@/assets/style/Toast.css";
 </style>
