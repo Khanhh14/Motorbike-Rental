@@ -9,6 +9,10 @@ const session = require("express-session");
 const { Server } = require("socket.io");
 const { v4: uuidv4 } = require("uuid");
 
+// Import Swagger
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./docs/swagger");
+
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
@@ -165,12 +169,8 @@ io.on("connection", function (socket) {
   });
 });
 
-// ================= Middlewares & Routes =================
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-// 1. CORS
+// ================= Middlewares =================
+// 1. CORS & Parsers
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:5173",
@@ -178,6 +178,9 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.use(
   session({
@@ -188,7 +191,7 @@ app.use(
   })
 );
 
-// 2. Cấu hình Static Folder: Trỏ đường dẫn /uploads trực tiếp vào public/uploads
+// 2. Static Folders
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 app.use("/public/uploads", express.static(path.join(__dirname, "public/uploads")));
 
@@ -196,7 +199,22 @@ app.get("/favicon.ico", function (req, res) {
   return res.status(204).end();
 });
 
-// ===== Routes =====
+// ================= Swagger UI Route =================
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    customSiteTitle: "Motorbike Rental API Docs",
+  })
+);
+
+app.get("/api-docs.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
+
+// ================= API Routes =================
 const authRoutes = require("./src/routes/auth.routes");
 const motorbikeRoutes = require("./src/routes/motorbike.routes");
 const rentalRoutes = require("./src/routes/rental.routes");
@@ -221,12 +239,11 @@ app.use("/api/surcharges", surchargeRoutes);
 app.use("/api/vehicletype", vehicletype);
 app.use("/api/captcha", captchaRoute);
 
-// 404
+// ================= Catch 404 & Error Handling =================
 app.use(function (req, res) {
   res.status(404).json({ error: "Không tìm thấy API" });
 });
 
-// Error handler
 app.use(function (err, req, res, _next) {
   console.error("Lỗi:", err && err.message ? err.message : err);
   res.status(err && err.status ? err.status : 500).json({
@@ -239,8 +256,9 @@ app.use(function (err, req, res, _next) {
   });
 });
 
-// Start
+// ================= Start Server =================
 const port = process.env.PORT || 5000;
 server.listen(port, function () {
   console.log("Server đang chạy tại: http://localhost:" + port);
+  console.log("Swagger UI sẵn sàng tại: http://localhost:" + port + "/api-docs");
 });

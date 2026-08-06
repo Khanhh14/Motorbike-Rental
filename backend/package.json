@@ -27,7 +27,10 @@
     "qrcode": "^1.5.4",
     "socket.io": "^4.8.1",
     "svg-captcha": "^1.4.0",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0",
-    "vietqr": "^1.1.9"
+    "vietqr": "^1.1.9",
+    "yamljs": "^0.3.0"
   }
 }
