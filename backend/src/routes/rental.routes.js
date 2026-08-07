@@ -12,12 +12,39 @@ const authMiddleware = authenticateJWT;
 // Dùng cookie-parser nếu cần (dù hiện tại đang dùng token)
 router.use(cookieParser());
 
-
+/**
+ * @openapi
+ * /api/rentals:
+ *   get:
+ *     summary: Lấy danh sách tất cả đơn thuê (Dành cho Admin)
+ *     tags: [Rentals]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lấy danh sách đơn thuê thành công
+ *       401:
+ *         description: Chưa xác thực
+ *       403:
+ *         description: Không có quyền truy cập
+ */
 router.get("/", authMiddleware, rentalController.getRentals);
 
 /**
- * ✅ API cho USER: lấy các đơn thuê của chính họ
- * (GET /api/rentals/user-rentals)
+ * @openapi
+ * /api/rentals/user-rentals:
+ *   get:
+ *     summary: Lấy danh sách đơn thuê của chính người dùng đang đăng nhập
+ *     tags: [Rentals]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lấy danh sách đơn thuê thành công
+ *       401:
+ *         description: Chưa xác thực
+ *       404:
+ *         description: Không tìm thấy đơn thuê nào
  */
 router.get("/user-rentals", authMiddleware, async (req, res) => {
   try {
@@ -41,12 +68,106 @@ router.get("/user-rentals", authMiddleware, async (req, res) => {
 });
 
 /**
- * ✅ API: Lấy chi tiết đơn thuê theo ID (chỉ của user đó)
+ * @openapi
+ * /api/rentals/update-status:
+ *   put:
+ *     summary: Tự động kiểm tra và cập nhật trạng thái các đơn thuê quá hạn
+ *     tags: [Rentals]
+ *     responses:
+ *       200:
+ *         description: Đã cập nhật trạng thái đơn thuê thành công
+ *       500:
+ *         description: Lỗi server
+ */
+if (typeof rentalController.checkAndUpdateRentals === "function") {
+  router.put("/update-status", rentalController.checkAndUpdateRentals);
+
+  // Tự động cập nhật định kỳ mỗi 60 giây
+  setInterval(async () => {
+    try {
+      await rentalController.checkAndUpdateRentals();
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái đơn thuê:", error);
+    }
+  }, 60000);
+}
+
+/**
+ * @openapi
+ * /api/rentals/{id}:
+ *   get:
+ *     summary: Lấy thông tin chi tiết đơn thuê theo ID
+ *     tags: [Rentals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của đơn thuê
+ *     responses:
+ *       200:
+ *         description: Lấy chi tiết thành công
+ *       401:
+ *         description: Chưa xác thực
+ *       404:
+ *         description: Không tìm thấy đơn thuê
  */
 router.get("/:id", authMiddleware, rentalController.getRentalById);
 
 /**
- * ✅ API: Tạo đơn thuê mới
+ * @openapi
+ * /api/rentals:
+ *   post:
+ *     summary: Tạo đơn thuê xe mới
+ *     tags: [Rentals]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - motorbike_id
+ *               - start_date
+ *               - end_date
+ *               - total_price
+ *             properties:
+ *               motorbike_id:
+ *                 type: string
+ *                 example: "12"
+ *               start_date:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2026-08-10T08:00:00Z"
+ *               end_date:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2026-08-12T08:00:00Z"
+ *               total_price:
+ *                 type: number
+ *                 example: 300000
+ *               name:
+ *                 type: string
+ *                 example: "Nguyễn Văn A"
+ *                 description: Nhập nếu tạo tài khoản khách (Guest)
+ *               phone:
+ *                 type: string
+ *                 example: "0912345678"
+ *               email:
+ *                 type: string
+ *                 example: "guest@example.com"
+ *     responses:
+ *       201:
+ *         description: Tạo đơn thuê thành công
+ *       400:
+ *         description: Dữ liệu gửi lên không hợp lệ
+ *       500:
+ *         description: Lỗi máy chủ
  */
 router.post("/", authMiddleware, validateRentalData, async (req, res) => {
   try {
@@ -82,33 +203,72 @@ router.post("/", authMiddleware, validateRentalData, async (req, res) => {
 });
 
 /**
- * ✅ API: Cập nhật trạng thái đơn thuê
+ * @openapi
+ * /api/rentals/{id}/status:
+ *   put:
+ *     summary: Cập nhật trạng thái đơn thuê
+ *     tags: [Rentals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của đơn thuê cần cập nhật
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 example: "confirmed"
+ *                 description: Trạng thái mới (pending, confirmed, completed, cancelled)
+ *     responses:
+ *       200:
+ *         description: Cập nhật trạng thái thành công
+ *       400:
+ *         description: Trạng thái không hợp lệ
+ *       401:
+ *         description: Chưa xác thực
+ *       404:
+ *         description: Không tìm thấy đơn thuê
  */
 if (typeof rentalController.updateRentalStatus === "function") {
   router.put("/:id/status", authMiddleware, rentalController.updateRentalStatus);
 }
 
 /**
- * ✅ API: Xóa đơn thuê
+ * @openapi
+ * /api/rentals/{id}:
+ *   delete:
+ *     summary: Xóa đơn thuê
+ *     tags: [Rentals]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID đơn thuê cần xóa
+ *     responses:
+ *       200:
+ *         description: Xóa đơn thuê thành công
+ *       401:
+ *         description: Chưa xác thực
+ *       404:
+ *         description: Không tìm thấy đơn thuê
  */
 if (typeof rentalController.deleteRental === "function") {
   router.delete("/:id", authMiddleware, rentalController.deleteRental);
-}
-
-/**
- * ✅ API: Tự động cập nhật trạng thái đơn thuê khi quá hạn
- */
-if (typeof rentalController.checkAndUpdateRentals === "function") {
-  router.put("/update-status", rentalController.checkAndUpdateRentals);
-
-  // Tự động cập nhật định kỳ mỗi 60 giây
-  setInterval(async () => {
-    try {
-      await rentalController.checkAndUpdateRentals();
-    } catch (error) {
-      console.error("Lỗi khi cập nhật trạng thái đơn thuê:", error);
-    }
-  }, 60000);
 }
 
 module.exports = router;

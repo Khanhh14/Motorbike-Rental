@@ -3,13 +3,82 @@ const router = express.Router();
 const reviewController = require("../controllers/review.controllers");
 const validateReview = require("../middleware/validateReview");
 
-// ✅ Thêm route lấy tất cả đánh giá
+/**
+ * @openapi
+ * /api/reviews:
+ *   get:
+ *     summary: Lấy tất cả đánh giá trên hệ thống
+ *     tags: [Reviews]
+ *     responses:
+ *       200:
+ *         description: Lấy danh sách đánh giá thành công
+ *       500:
+ *         description: Lỗi máy chủ
+ */
 router.get("/", reviewController.getAllReviews);
 
-// ✅ Lấy danh sách đánh giá của một xe
+/**
+ * @openapi
+ * /api/reviews/{motorbike_id}:
+ *   get:
+ *     summary: Lấy danh sách đánh giá của một xe cụ thể
+ *     tags: [Reviews]
+ *     parameters:
+ *       - in: path
+ *         name: motorbike_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của xe máy cần xem đánh giá
+ *     responses:
+ *       200:
+ *         description: Lấy danh sách đánh giá theo xe thành công
+ *       404:
+ *         description: Không tìm thấy xe hoặc chưa có đánh giá
+ */
 router.get("/:motorbike_id", reviewController.getReviewsByMotorbike);
 
-// ✅ Thêm đánh giá mới
+/**
+ * @openapi
+ * /api/reviews:
+ *   post:
+ *     summary: Thêm đánh giá mới cho xe
+ *     tags: [Reviews]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - motorbikeId
+ *               - rating
+ *               - comment
+ *             properties:
+ *               motorbikeId:
+ *                 type: string
+ *                 example: "60d5ecb8b5c9c22b1c8e4111"
+ *                 description: ID xe được đánh giá
+ *               rating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 example: 5
+ *                 description: Số sao đánh giá (từ 1 đến 5)
+ *               comment:
+ *                 type: string
+ *                 example: Xe chạy rất êm, chủ xe nhiệt tình!
+ *                 description: Nội dung bình luận
+ *     responses:
+ *       201:
+ *         description: Thêm đánh giá thành công
+ *       400:
+ *         description: Dữ liệu gửi lên không hợp lệ
+ *       401:
+ *         description: Chưa xác thực người dùng
+ */
 router.post("/", validateReview, reviewController.createReview);
 
 module.exports = router;

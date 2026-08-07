@@ -202,7 +202,7 @@ export default {
   computed: {
     filteredRentals() {
       const searchText = this.search.trim().toLowerCase();
-      return this.rentals.filter((rental) => {
+      const filtered = this.rentals.filter((rental) => {
         const name = (rental.renter_name || rental.user_name || "").toLowerCase();
         const model = (rental.motorbike_model || "").toLowerCase();
 
@@ -211,6 +211,9 @@ export default {
 
         return matchesSearch && matchesStatus;
       });
+
+      // Sắp xếp đơn thuê mới nhất lên đầu dựa trên ID giảm dần
+      return filtered.sort((a, b) => Number(b.id) - Number(a.id));
     },
 
     paginatedRentals() {

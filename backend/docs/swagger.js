@@ -1,7 +1,37 @@
-const yaml = require("yamljs");
-const path = require("path");
+const swaggerJsdoc = require('swagger-jsdoc');
 
-// Đọc trực tiếp file tài liệu YAML
-const swaggerSpec = yaml.load(path.join(__dirname, "swagger.yaml"));
+const options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Motorbike Rental API',
+      version: '1.0.0',
+      description: 'API Documentation for Motorbike Rental Website',
+    },
+    servers: [
+      {
+        url: 'http://localhost:5000',
+        description: 'Local Development Server',
+      },
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
+  },
+  apis: ['./src/routes/*.js'],
+};
+
+const swaggerSpec = swaggerJsdoc(options);
 
 module.exports = swaggerSpec;
