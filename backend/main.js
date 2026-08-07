@@ -225,6 +225,7 @@ const statsRoutes = require("./src/routes/stats.routes");
 const surchargeRoutes = require("./src/routes/surcharge.routes");
 const vehicletype = require("./src/routes/vehicletype.routes");
 const captchaRoute = require("./src/routes/captcha.routes");
+const couponsRoutes = require("./src/routes/coupons.routes");
 
 require("./src/utils/cronJobs");
 
@@ -238,6 +239,7 @@ app.use("/api/stats", statsRoutes);
 app.use("/api/surcharges", surchargeRoutes);
 app.use("/api/vehicletype", vehicletype);
 app.use("/api/captcha", captchaRoute);
+app.use("/api/coupons", couponsRoutes);
 
 // ================= Catch 404 & Error Handling =================
 app.use(function (req, res) {

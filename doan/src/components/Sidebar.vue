@@ -2,14 +2,15 @@
   <div class="sidebar">
     <h2>Travalizer</h2>
     <ul>
-      <li @click="$router.push('/admin/chatadmin')">💬 Hỗ trợ khách hàng</li>
-      <li @click="$router.push('/admin/vehicle-type')">⚙️ Quản lý Loại Xe</li>
-      <li @click="$router.push('/admin/motorbikes')">🏍️ Quản Lý Xe</li>
-      <li @click="$router.push('/admin/rentals')">📅 Quản Lý Cho Thuê</li> 
-      <li @click="$router.push('/admin/reviews')">👨‍🏫 Quản Lý Đánh Giá</li>
-      <li @click="$router.push('/admin/payments')">💰 Quản Lý Thanh Toán</li>
-      <li @click="$router.push('/admin/surcharges')">💵 Quản Lý Phụ Thu</li>
-      <li @click="$router.push('/admin/stats')">📊 Thống Kê</li>
+      <li @click="$router.push('/admin/chatadmin')">Hỗ trợ khách hàng</li>
+      <li @click="$router.push('/admin/vehicle-type')">Quản lý Loại Xe</li>
+      <li @click="$router.push('/admin/motorbikes')">Quản Lý Xe</li>
+      <li @click="$router.push('/admin/rentals')">Quản Lý Cho Thuê</li> 
+      <li @click="$router.push('/admin/coupons')">Quản Lý Mã Giảm Giá</li>
+      <li @click="$router.push('/admin/reviews')">Quản Lý Đánh Giá</li>
+      <li @click="$router.push('/admin/payments')">Quản Lý Thanh Toán</li>
+      <li @click="$router.push('/admin/surcharges')">Quản Lý Phụ Thu</li>
+      <li @click="$router.push('/admin/stats')">Thống Kê</li>
     </ul>
   </div>
 </template>

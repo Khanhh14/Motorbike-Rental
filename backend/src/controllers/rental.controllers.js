@@ -34,10 +34,13 @@ exports.getRentals = async (req, res) => {
         rentals.start_date,
         rentals.end_date,
         rentals.total_price,
+        rentals.discount_amount,
+        coupons.code AS coupon_code,
         rentals.status
       FROM rentals
       JOIN users ON rentals.user_id = users.id
       JOIN motorbikes ON rentals.motorbike_id = motorbikes.id
+      LEFT JOIN coupons ON rentals.coupon_id = coupons.id
     `;
 
     const [rows] = await db.query(query);
@@ -51,35 +54,35 @@ exports.getRentals = async (req, res) => {
   }
 };
 
-
 // 📌 Hàm dùng cho route truyền userId từ cookie/middleware
 exports.getUserRentalsById = async (userId) => {
   const query = `
       SELECT rentals.id, 
              users.name AS renter_name, 
              motorbikes.model AS motorbike_model,
-             motorbikes.image_url AS motorbike_image, -- ✅ Đã thêm lấy cột ảnh
+             motorbikes.image_url AS motorbike_image,
              motorbikes.id AS motorbike_id,
              rentals.start_date, 
              rentals.end_date, 
              rentals.total_price, 
+             rentals.discount_amount,
+             coupons.code AS coupon_code,
              rentals.status
       FROM rentals
       JOIN motorbikes ON rentals.motorbike_id = motorbikes.id
       JOIN users ON rentals.user_id = users.id
+      LEFT JOIN coupons ON rentals.coupon_id = coupons.id
       WHERE rentals.user_id = ?
       ORDER BY rentals.start_date DESC
     `;
   const [rows] = await db.query(query, [userId]);
   
-  // Chuẩn hóa đường dẫn ảnh
   rows.forEach(row => {
     row.motorbike_image = normalizeImageUrl(row.motorbike_image);
   });
 
   return rows;
 };
-
 
 // 🚨 API: GET /api/rentals/user-rentals
 exports.getUserRentals = async (req, res) => {
@@ -95,9 +98,12 @@ exports.getUserRentals = async (req, res) => {
         r.start_date, 
         r.end_date, 
         r.total_price, 
+        r.discount_amount,
+        c.code AS coupon_code,
         r.status 
       FROM rentals r
       JOIN motorbikes m ON r.motorbike_id = m.id
+      LEFT JOIN coupons c ON r.coupon_id = c.id
       WHERE r.user_id = ?
       ORDER BY r.start_date DESC
     `;
@@ -116,18 +122,20 @@ exports.getUserRentals = async (req, res) => {
   }
 };
 
-
-
 // ✅ Lấy chi tiết đơn thuê theo ID
 exports.getRentalById = async (req, res) => {
-  const user_id = req.user.id; // Lấy user_id từ token/session
+  const user_id = req.user.id;
   const { id } = req.params;
 
   try {
     const [rows] = await db.query(
-      `SELECT rentals.*, motorbikes.model AS motorbike_model, motorbikes.image_url AS motorbike_image
+      `SELECT rentals.*, 
+              motorbikes.model AS motorbike_model, 
+              motorbikes.image_url AS motorbike_image,
+              coupons.code AS coupon_code
        FROM rentals
        JOIN motorbikes ON rentals.motorbike_id = motorbikes.id
+       LEFT JOIN coupons ON rentals.coupon_id = coupons.id
        WHERE rentals.id = ? AND rentals.user_id = ?`,
       [id, user_id]
     );
@@ -145,11 +153,10 @@ exports.getRentalById = async (req, res) => {
   }
 };
 
-
-// ✅ Tạo đơn thuê mới
+// ✅ Tạo đơn thuê mới (Tích hợp giảm giá Coupon)
 exports.createRental = async ({ body }) => {
   try {
-    let { user_id, motorbike_id, start_date, end_date, total_price, name, phone, email } = body;
+    let { user_id, motorbike_id, start_date, end_date, total_price, coupon_code, name, phone, email } = body;
 
     // Nếu user_id chưa có (khách vãng lai), yêu cầu thông tin cá nhân
     if (!user_id) {
@@ -157,7 +164,6 @@ exports.createRental = async ({ body }) => {
         throw new Error("Cần nhập đầy đủ thông tin cá nhân để thuê xe");
       }
 
-      // Tạo tài khoản guest
       const [userResult] = await db.query(
         "INSERT INTO users (name, phone, email, role) VALUES (?, ?, ?, 'guest')",
         [name, phone, email]
@@ -181,27 +187,77 @@ exports.createRental = async ({ body }) => {
       throw new Error("Xe hiện đang được thuê");
     }
 
-    // Tính tổng giá nếu chưa được gửi từ frontend
-    if (!total_price) {
-      const price_per_day = motorbike[0].price_per_day;
-      const days = Math.ceil((new Date(end_date) - new Date(start_date)) / (1000 * 60 * 60 * 24));
-      total_price = days > 0 ? days * price_per_day : 0;
-    }
+    // Tính tổng tiền gốc theo ngày
+    const price_per_day = motorbike[0].price_per_day;
+    const days = Math.ceil((new Date(end_date) - new Date(start_date)) / (1000 * 60 * 60 * 24));
+    let originalPrice = days > 0 ? days * price_per_day : 0;
+
+    let appliedCouponId = null;
+    let discountAmount = 0;
 
     // Bắt đầu transaction
     await db.query("START TRANSACTION");
 
+    // Xử lý Coupon nếu được gửi lên
+    if (coupon_code) {
+      const [coupons] = await db.query(
+        `SELECT * FROM coupons WHERE code = ? AND is_active = TRUE FOR UPDATE`,
+        [coupon_code]
+      );
+
+      if (coupons.length === 0) {
+        throw new Error("Mã giảm giá không hợp lệ");
+      }
+
+      const coupon = coupons[0];
+      const now = new Date();
+
+      if (new Date(coupon.start_date) > now || new Date(coupon.end_date) < now) {
+        throw new Error("Mã giảm giá đã hết hạn sử dụng");
+      }
+
+      if (coupon.usage_limit !== null && coupon.used_count >= coupon.usage_limit) {
+        throw new Error("Mã giảm giá đã hết lượt sử dụng");
+      }
+
+      if (originalPrice < parseFloat(coupon.min_order_value)) {
+        throw new Error(`Đơn hàng tối thiểu ${coupon.min_order_value} VNĐ để áp dụng mã`);
+      }
+
+      // Tính tiền giảm
+      if (coupon.discount_type === "percentage") {
+        discountAmount = (originalPrice * parseFloat(coupon.discount_value)) / 100;
+        if (coupon.max_discount_amount && discountAmount > parseFloat(coupon.max_discount_amount)) {
+          discountAmount = parseFloat(coupon.max_discount_amount);
+        }
+      } else {
+        discountAmount = parseFloat(coupon.discount_value);
+      }
+
+      if (discountAmount > originalPrice) discountAmount = originalPrice;
+
+      appliedCouponId = coupon.id;
+
+      // Cập nhật số lần mã đã được dùng
+      await db.query("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?", [coupon.id]);
+    }
+
+    // Tính tổng giá thực tế khách phải trả
+    const finalTotalPrice = total_price !== undefined ? total_price : (originalPrice - discountAmount);
+
     // Tạo đơn thuê
     const [rentalResult] = await db.query(
-      "INSERT INTO rentals (user_id, motorbike_id, start_date, end_date, total_price, status) VALUES (?, ?, ?, ?, ?, 'pending')",
-      [user_id, motorbike_id, start_date, end_date, total_price]
+      `INSERT INTO rentals 
+      (user_id, motorbike_id, start_date, end_date, total_price, coupon_id, discount_amount, status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      [user_id, motorbike_id, start_date, end_date, finalTotalPrice, appliedCouponId, discountAmount]
     );
 
     if (!rentalResult.insertId) {
       throw new Error("Lỗi khi tạo đơn thuê");
     }
 
-    // ✅ Cập nhật trạng thái xe sang Rented ngay khi đơn ở trạng thái pending
+    // Cập nhật trạng thái xe sang Rented
     await db.query("UPDATE motorbikes SET status = 'Rented' WHERE id = ?", [motorbike_id]);
 
     // Commit transaction
@@ -215,19 +271,16 @@ exports.createRental = async ({ body }) => {
   }
 };
 
-
-
-// ✅ Cập nhật trạng thái đơn thuê
+// ✅ Cập nhật trạng thái đơn thuê (Nếu hủy đơn -> hoàn lại 1 lượt dùng coupon)
 exports.updateRentalStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
-  if (!["pending","ongoing", "canceled", "completed"].includes(status)) {
+  if (!["pending", "ongoing", "canceled", "completed"].includes(status)) {
     return res.status(400).json({ error: "Trạng thái không hợp lệ" });
   }
 
   try {
-    // Lấy thông tin đơn thuê và người thuê
     const [rental] = await db.query(
       `SELECT rentals.*, users.name AS user_name, users.email, motorbikes.model AS motorbike_model
        FROM rentals
@@ -241,34 +294,41 @@ exports.updateRentalStatus = async (req, res) => {
       return res.status(404).json({ error: "Không tìm thấy đơn thuê" });
     }
 
-    const motorbike_id = rental[0].motorbike_id;
+    const currentRental = rental[0];
+    const motorbike_id = currentRental.motorbike_id;
 
     await db.query("START TRANSACTION");
+
+    // Nếu đơn bị chuyển sang 'canceled' và trước đó có dùng coupon, giảm used_count đi 1
+    if (status === "canceled" && currentRental.status !== "canceled" && currentRental.coupon_id) {
+      await db.query("UPDATE coupons SET used_count = GREATEST(0, used_count - 1) WHERE id = ?", [currentRental.coupon_id]);
+    }
+
     await db.query("UPDATE rentals SET status = ? WHERE id = ?", [status, id]);
 
     const newMotorbikeStatus = status === "ongoing" || status === "pending" ? "Rented" : "Available";
     await db.query("UPDATE motorbikes SET status = ? WHERE id = ?", [newMotorbikeStatus, motorbike_id]);
+
     await db.query("COMMIT");
 
-    // ✅ Gửi email nếu trạng thái là "ongoing"
-    if (status === "ongoing" && rental[0].email) {
+    // Gửi email thông báo
+    if (status === "ongoing" && currentRental.email) {
       await sendRentalAcceptedEmail(
-        rental[0].email,
-        rental[0].user_name,
-        rental[0].motorbike_model,
-        rental[0].start_date,
-        rental[0].end_date
+        currentRental.email,
+        currentRental.user_name,
+        currentRental.motorbike_model,
+        currentRental.start_date,
+        currentRental.end_date
       );
     }
 
-    // ✅ Gửi email nếu trạng thái là "canceled"
-    if (status === "canceled" && rental[0].email) {
+    if (status === "canceled" && currentRental.email) {
       await sendRentalRejectedEmail(
-        rental[0].email,
-        rental[0].user_name,
-        rental[0].motorbike_model,
-        rental[0].start_date,
-        rental[0].end_date
+        currentRental.email,
+        currentRental.user_name,
+        currentRental.motorbike_model,
+        currentRental.start_date,
+        currentRental.end_date
       );
     }
 
@@ -280,23 +340,29 @@ exports.updateRentalStatus = async (req, res) => {
   }
 };
 
-
-// ✅ Xóa đơn thuê theo ID
+// ✅ Xóa đơn thuê theo ID (Hoàn trả lại lượt dùng coupon nếu có)
 exports.deleteRental = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const [rental] = await db.query("SELECT motorbike_id FROM rentals WHERE id = ?", [id]);
+    const [rental] = await db.query("SELECT motorbike_id, coupon_id, status FROM rentals WHERE id = ?", [id]);
 
     if (rental.length === 0) {
       return res.status(404).json({ error: "Không tìm thấy đơn thuê" });
     }
 
-    const motorbike_id = rental[0].motorbike_id;
+    const { motorbike_id, coupon_id, status } = rental[0];
 
     await db.query("START TRANSACTION");
+
+    // Nếu xóa đơn chưa bị canceled trước đó mà có coupon thì trả lại lượt dùng
+    if (coupon_id && status !== "canceled") {
+      await db.query("UPDATE coupons SET used_count = GREATEST(0, used_count - 1) WHERE id = ?", [coupon_id]);
+    }
+
     await db.query("DELETE FROM rentals WHERE id = ?", [id]);
     await db.query("UPDATE motorbikes SET status = 'Available' WHERE id = ?", [motorbike_id]);
+
     await db.query("COMMIT");
 
     res.json({ message: "Xóa đơn thuê thành công!" });
@@ -307,13 +373,9 @@ exports.deleteRental = async (req, res) => {
   }
 };
 
-
 // ✅ Auto cập nhật trạng thái đơn thuê
 const autoUpdateRentalStatus = async () => {
   try {
-    const now = new Date(); // Lấy thời gian hiện tại
-
-    // Lấy danh sách đơn thuê đã hết hạn (theo giờ)
     const [expiredRentals] = await db.query(
       "SELECT id, motorbike_id FROM rentals WHERE status = 'ongoing' AND end_date <= NOW()"
     );
@@ -337,8 +399,6 @@ const autoUpdateRentalStatus = async () => {
   }
 };
 
-
-// Giữ nguyên cron job
 cron.schedule("* * * * *", autoUpdateRentalStatus, {
   scheduled: true,
   timezone: "Asia/Ho_Chi_Minh",

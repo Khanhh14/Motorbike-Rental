@@ -22,6 +22,7 @@ import SurchargeLookup from "@/components/SurchargeLookup.vue";
 import ChangePassword from "@/components/ChangePassword.vue";
 import VehicleTypeAdmin from "@/components/VehicleTypeAdmin.vue";
 import ChatAdmin from "@/components/ChatAdmin.vue";
+import CouponsAdmin from "@/components/CouponsAdmin.vue";
 
 const routes = [
   {
@@ -120,6 +121,11 @@ const routes = [
         path: "reviews", 
         name: "review-admin",
         component: ReviewAdmin,
+      },
+      {
+        path: "coupons", 
+        name: "coupons-admin",
+        component: CouponsAdmin,
       },
       {
         path: "payments", 
