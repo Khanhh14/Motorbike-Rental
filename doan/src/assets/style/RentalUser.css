@@ -311,3 +311,12 @@
 .fade-enter, .fade-leave-to {
   opacity: 0;
 }
+/* Style hiệu ứng rê chuột vào từng dòng của bảng */
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.clickable-row:hover {
+  background-color: #f8fafc;
+}

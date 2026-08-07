@@ -64,7 +64,12 @@
         </div>
 
         <ul v-else class="activity-list">
-          <li v-for="rental in recentRentals" :key="rental.id" class="activity-item">
+          <li 
+            v-for="rental in recentRentals" 
+            :key="rental.id" 
+            class="activity-item clickable"
+            @click="selectedRental = rental"
+          >
             <div class="motor-img-wrapper">
               <img
                 v-if="getRentalImage(rental)"
@@ -94,10 +99,17 @@
                 {{ statusLabel(rental.status) }}
               </span>
             </div>
-
           </li>
         </ul>
       </section>
+
+      <!-- SỬ DỤNG COMPONENT MODAL DÙNG TÊN ModalDetailRental -->
+      <ModalDetailRental
+        :rental="selectedRental"
+        :backend-url="BACKEND_URL"
+        @close="selectedRental = null"
+      />
+
     </main>
   </div>
 </template>
@@ -107,13 +119,14 @@ import { useUserStore } from '@/store/userStore';
 import { useRouter } from 'vue-router';
 import { onMounted, reactive, ref, computed } from 'vue';
 import Sidebar from '@/components/SideUser.vue';
+import ModalDetailRental from '@/components/ModalDetailRental.vue';
 
-// Khai báo Base URL Backend của bạn để load ảnh tĩnh (static files)
 const BACKEND_URL = "http://localhost:5000";
 
 export default {
   components: {
-    Sidebar
+    Sidebar,
+    ModalDetailRental
   },
   setup() {
     const authStore = useUserStore();
@@ -126,8 +139,8 @@ export default {
     });
 
     const rentedCars = ref([]);
+    const selectedRental = ref(null);
 
-    // Lightweight wrapper to automatically add Authorization header using the store token
     const apiFetchSafe = async (url, options = {}) => {
       const token = authStore.token || localStorage.getItem('token');
       const headers = Object.assign({}, options.headers || {});
@@ -138,23 +151,16 @@ export default {
 
     const fetchUserInfo = async () => {
       const token = authStore.token;
-      if (!token) {
-        console.warn("Không có token, chưa đăng nhập.");
-        return;
-      }
+      if (!token) return;
 
       try {
         const response = await apiFetchSafe(`${BACKEND_URL}/api/auth/me`);
-
         const contentType = response.headers.get("Content-Type");
         if (contentType && contentType.includes("application/json")) {
           const data = await response.json();
           user.name = data.name;
           user.email = data.email;
           user.phone = data.phone;
-        } else {
-          const text = await response.text();
-          console.error("Không phải JSON:", text);
         }
       } catch (error) {
         console.error("Lỗi khi gọi API:", error);
@@ -167,14 +173,10 @@ export default {
 
       try {
         const response = await apiFetchSafe(`${BACKEND_URL}/api/rentals/user-rentals`);
-
         const contentType = response.headers.get("Content-Type");
         if (contentType && contentType.includes("application/json")) {
           const data = await response.json();
-          console.log("Danh sách đơn thuê:", data);
           rentedCars.value = data;
-        } else {
-          console.error("Dữ liệu trả về không phải JSON");
         }
       } catch (error) {
         console.error("Lỗi khi lấy đơn thuê:", error);
@@ -188,11 +190,13 @@ export default {
     };
 
     const dinhDangNgay = (dateStr) => {
+      if (!dateStr) return "N/A";
       const d = new Date(dateStr);
       return d.toLocaleDateString("vi-VN");
     };
 
     const getRentalImage = (rental) => {
+      if (!rental) return "";
       const rawImage =
         rental.motorbike_image ||
         rental.vehicle_image ||
@@ -202,7 +206,6 @@ export default {
         "";
 
       if (!rawImage) return "";
-
       const value = rawImage.toString().trim();
       if (!value) return "";
 
@@ -253,6 +256,8 @@ export default {
       user,
       rentedCars,
       recentRentals,
+      selectedRental,
+      BACKEND_URL,
       dangXuat,
       dinhDangNgay,
       getRentalImage,
@@ -265,4 +270,5 @@ export default {
 
 <style scoped>
 @import "@/assets/style/UserPage.css";
+
 </style>

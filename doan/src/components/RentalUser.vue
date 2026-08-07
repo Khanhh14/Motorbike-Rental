@@ -40,8 +40,13 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="order in filteredOrders" :key="order.id">
-              <!-- Sửa lỗi hiển thị tên người thuê nếu key API bị khác -->
+            <!-- Click dòng để xem chi tiết đơn thuê -->
+            <tr 
+              v-for="order in filteredOrders" 
+              :key="order.id"
+              class="clickable-row"
+              @click="openDetailModal(order)"
+            >
               <td class="font-medium">
                 {{ order.renter_name || order.full_name || order.user_name || order.customer_name || 'Khách hàng' }}
               </td>
@@ -60,7 +65,7 @@
                 <button
                   v-if="order.status === 'completed'"
                   class="btn-review"
-                  @click="openReviewModal(order)"
+                  @click.stop="openReviewModal(order)"
                 >
                   <svg viewBox="0 0 24 24" width="16" height="16" class="btn-icon">
                     <path fill="currentColor" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
@@ -78,6 +83,13 @@
         </table>
       </div>
 
+      <!-- Modal Xem Chi Tiết Đơn Thuê -->
+      <ModalDetailRental
+        :rental="selectedDetailOrder"
+        :backend-url="BACKEND_URL"
+        @close="selectedDetailOrder = null"
+      />
+
       <!-- Modal Viết Đánh Giá -->
       <transition name="fade">
         <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
@@ -90,7 +102,7 @@
             </div>
 
             <div class="modal-body">
-              <!-- Star Rating Component - Căn Trung Tâm -->
+              <!-- Star Rating Component -->
               <div class="form-group text-center">
                 <label class="rating-label">Mức độ hài lòng của bạn</label>
                 <div class="star-rating center-stars">
@@ -140,16 +152,24 @@
 <script>
 import axios from "axios";
 import Sidebar from "@/components/SideUser.vue";
+import ModalDetailRental from "@/components/ModalDetailRental.vue";
 
 export default {
   components: {
     Sidebar,
+    ModalDetailRental,
   },
   data() {
     return {
+      BACKEND_URL: "http://localhost:5000",
       orders: [],
       search: "",
       user_id: localStorage.getItem("user_id"),
+      
+      // State cho Modal Chi tiết
+      selectedDetailOrder: null,
+
+      // State cho Modal Đánh giá
       showModal: false,
       selectedOrder: {},
       hoverRating: 0,
@@ -180,6 +200,9 @@ export default {
         console.error("Lỗi khi lấy dữ liệu:", error.response?.status, error.response?.data);
       }
     },
+    openDetailModal(order) {
+      this.selectedDetailOrder = order;
+    },
     openReviewModal(order) {
       this.selectedOrder = order;
       this.review = { rating: 0, comment: "" };
@@ -199,12 +222,10 @@ export default {
         return;
       }
 
-      // Xử lý lấy motorbike_id linh hoạt tránh lỗi undefined
       const motorbike_id = this.selectedOrder.motorbike_id || this.selectedOrder.motorbike?.id;
 
       if (!motorbike_id) {
         alert("Không thể xác định ID xe để gửi đánh giá.");
-        console.log("Chi tiết đơn chọn:", this.selectedOrder);
         return;
       }
 
