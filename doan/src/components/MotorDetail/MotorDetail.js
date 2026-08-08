@@ -33,7 +33,15 @@ export default defineComponent({
     const errorMessage = ref("");
     const qrCodeValue = ref("");
 
-    // Khởi tạo khớp với các trường trong CSDL mới (bao gồm model & license_plate)
+    // State Thanh toán & Mã giảm giá
+    const paymentMethod = ref("transfer"); // 'transfer' (Chuyển khoản) hoặc 'cash' (Tiền mặt)
+    const couponCode = ref("");
+    const appliedCoupon = ref(null); // Lưu kết quả trả về từ API Backend
+    const couponMessage = ref("");
+    const isCouponApplied = ref(false);
+    const availableCoupons = ref([]);
+
+    // Xe & Đơn thuê
     const motorbikes = ref({
       id: null,
       brand: "",
@@ -71,7 +79,8 @@ export default defineComponent({
     const isLoggedIn = computed(() => !!userStore.token);
     const today = computed(() => new Date().toISOString().split("T")[0]);
 
-    const totalPrice = computed(() => {
+    // Giá tạm tính ban đầu
+    const subtotalPrice = computed(() => {
       if (!rental.value.startDate || !rental.value.endDate) return 0;
 
       const startDateTime = new Date(`${rental.value.startDate}T${rental.value.startTime}`);
@@ -86,6 +95,95 @@ export default defineComponent({
 
       return Math.round(finalPrice / 1000) * 1000;
     });
+
+    const totalPrice = computed(() => subtotalPrice.value);
+
+    // Số tiền giảm giá lấy từ kết quả Backend hoặc tính nhẩm phía Client
+    const discountAmount = computed(() => {
+      if (!appliedCoupon.value) return 0;
+      return appliedCoupon.value.discount_amount || 0;
+    });
+
+    // Tổng tiền thanh toán cuối cùng
+    const finalTotalPrice = computed(() => {
+      if (appliedCoupon.value && appliedCoupon.value.final_amount !== undefined) {
+        return appliedCoupon.value.final_amount;
+      }
+      return Math.max(0, subtotalPrice.value - discountAmount.value);
+    });
+
+    // === API COUPONS (Khớp với Controller Backend) ===
+
+    // Lấy danh sách mã giảm giá để người dùng chọn nhanh
+    const fetchAvailableCoupons = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/coupons");
+        if (Array.isArray(res.data)) {
+          const now = new Date();
+          // Lọc mã hợp lệ hiển thị lên giao diện
+          availableCoupons.value = res.data.filter((c) => {
+            const isNotExpired = (!c.start_date || new Date(c.start_date) <= now) && 
+                                 (!c.end_date || new Date(c.end_date) >= now);
+            const hasUsageLeft = c.usage_limit === null || c.used_count < c.usage_limit;
+            return c.is_active && isNotExpired && hasUsageLeft;
+          });
+        }
+      } catch (error) {
+        console.error("Lỗi lấy danh sách mã giảm giá:", error);
+      }
+    };
+
+    // Gọi API `applyCoupon` của Backend để kiểm tra & tính tiền
+    const applyCoupon = async (codeOverride = null) => {
+      const codeToApply = codeOverride || couponCode.value.trim();
+
+      if (!codeToApply) {
+        couponMessage.value = "Vui lòng nhập hoặc chọn mã giảm giá.";
+        isCouponApplied.value = false;
+        return;
+      }
+
+      if (subtotalPrice.value <= 0) {
+        couponMessage.value = "Vui lòng chọn thời gian thuê xe trước khi áp dụng mã.";
+        isCouponApplied.value = false;
+        return;
+      }
+
+      try {
+        const res = await axios.post("http://localhost:5000/api/coupons/apply", {
+          code: codeToApply,
+          order_amount: subtotalPrice.value,
+        });
+
+        // Áp dụng thành công
+        appliedCoupon.value = res.data;
+        couponCode.value = res.data.code;
+        isCouponApplied.value = true;
+        couponMessage.value = res.data.message || "Áp dụng mã giảm giá thành công!";
+      } catch (error) {
+        appliedCoupon.value = null;
+        isCouponApplied.value = false;
+        couponMessage.value = error.response?.data?.message || "Mã giảm giá không áp dụng được.";
+      }
+    };
+
+    // Chọn mã từ thẻ danh sách
+    const selectCoupon = (coupon) => {
+      if (appliedCoupon.value && appliedCoupon.value.code === coupon.code) {
+        removeCoupon();
+        return;
+      }
+      couponCode.value = coupon.code;
+      applyCoupon(coupon.code);
+    };
+
+    // Hủy mã giảm giá
+    const removeCoupon = () => {
+      appliedCoupon.value = null;
+      couponCode.value = "";
+      couponMessage.value = "";
+      isCouponApplied.value = false;
+    };
 
     // === Fetch detail xe ===
     const fetchMotorbikeDetail = async () => {
@@ -161,7 +259,11 @@ export default defineComponent({
         start_date: `${rental.value.startDate} ${rental.value.startTime}:00`,
         end_date: `${rental.value.endDate} ${rental.value.endTime}:00`,
         motorbike_id: rental.value.motorbike_id,
-        total_price: totalPrice.value,
+        subtotal_price: subtotalPrice.value,
+        discount_amount: discountAmount.value,
+        total_price: finalTotalPrice.value,
+        coupon_id: appliedCoupon.value ? appliedCoupon.value.coupon_id : null,
+        payment_method: paymentMethod.value, // 'transfer' hoặc 'cash'
       };
 
       if (isLoggedIn.value) {
@@ -189,12 +291,16 @@ export default defineComponent({
         alert("Thuê xe thành công!");
         Cookies.remove("guest_rental");
 
-        showPaymentModal.value = true;
-        latestContentNumber.value += 1;
+        rentalOrder.value = { id: rentalId, totalPrice: finalTotalPrice.value };
 
-        rentalOrder.value = { id: rentalId, totalPrice: totalPrice.value };
-
-        generateQRCode();
+        // Kiểm tra hình thức thanh toán
+        if (paymentMethod.value === "transfer") {
+          showPaymentModal.value = true;
+          latestContentNumber.value += 1;
+          await generateQRCode();
+        } else {
+          router.push("/rentals");
+        }
 
         socket.emit("unlock_vehicle", vehicleId.value);
 
@@ -206,31 +312,29 @@ export default defineComponent({
       }
     };
 
-    // SỬA LỖI: Lấy trực tiếp totalPrice.value tính toán thực tế thay vì biến rental tĩnh
+    // Tạo QR thanh toán ngân hàng
     const generateQRCode = async () => {
       try {
         const response = await axios.post("http://localhost:5000/api/qr", {
           type: "bank",
           soTaiKhoan: "1048929602",
           tenTaiKhoan: "Nguyen Thi Mai",
-          soTien: totalPrice.value, 
+          soTien: finalTotalPrice.value,
           noiDung: `TTHDTX${latestContentNumber.value}`,
         });
 
-        qrCodeValue.value = response.data.success ? response.data.qr : '';
+        qrCodeValue.value = response.data.success ? response.data.qr : "";
       } catch (error) {
         console.error("Lỗi tạo mã QR:", error);
-        qrCodeValue.value = '';
+        qrCodeValue.value = "";
       }
     };
 
     const handlePaymentMethod = (methods) => {
       selectedPaymentMethods.value = methods;
-      console.log("Phương thức thanh toán đã chọn:", methods);
       router.push("/rentals");
     };
 
-    // THÊM MỚI: Hàm đặt lại Form để đồng bộ nút bấm "Đặt lại" ngoài giao diện
     const resetForm = () => {
       rental.value = {
         startDate: "",
@@ -245,6 +349,8 @@ export default defineComponent({
         phone: "",
         email: "",
       };
+      paymentMethod.value = "transfer";
+      removeCoupon();
       errorMessage.value = "";
     };
 
@@ -264,13 +370,28 @@ export default defineComponent({
       socket.disconnect();
     });
 
-    onMounted(fetchMotorbikeDetail);
+    onMounted(() => {
+      fetchMotorbikeDetail();
+      fetchAvailableCoupons();
+    });
 
     return {
       motorbikes,
       rental,
       userInfo,
       totalPrice,
+      subtotalPrice,
+      discountAmount,
+      finalTotalPrice,
+      paymentMethod,
+      couponCode,
+      appliedCoupon,
+      couponMessage,
+      isCouponApplied,
+      availableCoupons,
+      selectCoupon,
+      applyCoupon,
+      removeCoupon,
       submitRental,
       isLoggedIn,
       isLoading,
@@ -285,7 +406,7 @@ export default defineComponent({
       rentalOrder,
       getVehicleTypeName,
       isLockedByOther,
-      resetForm, // Đã được khai báo trả về để template gọi thành công
+      resetForm,
     };
   },
 });

@@ -81,14 +81,91 @@
             </div>
           </transition>
 
+          <!-- PHẦN MÃ GIẢM GIÁ (ẨN/HIỆN THEO BẤM) -->
+          <div class="coupon-section">
+            <div class="coupon-header">
+              <h3 class="section-subtitle">Mã giảm giá</h3>
+              <button 
+                type="button" 
+                class="btn-toggle-coupons" 
+                @click="showCouponList = !showCouponList"
+              >
+                {{ showCouponList ? 'Ẩn danh sách mã ▲' : 'Xem mã giảm giá ▼' }}
+              </button>
+            </div>
+            
+            <transition name="fade">
+              <div v-if="showCouponList" class="coupon-list-wrapper">
+                <div v-if="availableCoupons.length > 0" class="coupon-list">
+                  <div 
+                    v-for="c in availableCoupons" 
+                    :key="c.id" 
+                    :class="['coupon-card', { active: appliedCoupon && appliedCoupon.code === c.code }]"
+                    @click="selectCoupon(c)"
+                  >
+                    <div class="coupon-code">{{ c.code }}</div>
+                    <div class="coupon-desc">
+                      Giảm {{ (c.discount_type === 'percentage' || c.discount_type === 'percent') ? c.discount_value + '%' : Number(c.discount_value).toLocaleString('vi-VN') + ' VNĐ' }}
+                      <span v-if="c.min_order_value > 0">(Đơn từ {{ Number(c.min_order_value).toLocaleString('vi-VN') }}đ)</span>
+                    </div>
+                  </div>
+                </div>
+                <p v-else class="text-muted font-small">Không có mã giảm giá nào khả dụng.</p>
+              </div>
+            </transition>
+
+            <div class="coupon-input-group" style="margin-top: 10px;">
+              <input 
+                type="text" 
+                v-model="couponCode" 
+                placeholder="Nhập hoặc chọn mã giảm giá..." 
+                :disabled="appliedCoupon !== null"
+              />
+              <button 
+                type="button" 
+                class="btn-apply-coupon" 
+                @click="appliedCoupon ? removeCoupon() : applyCoupon()"
+              >
+                {{ appliedCoupon ? 'Hủy' : 'Áp dụng' }}
+              </button>
+            </div>
+            <p v-if="couponMessage" :class="['coupon-msg', isCouponApplied ? 'success' : 'error']">
+              {{ couponMessage }}
+            </p>
+          </div>
+
+          <!-- Phương thức thanh toán -->
+          <div class="payment-method-section">
+            <h3 class="section-subtitle">Hình thức thanh toán</h3>
+            <div class="payment-options">
+              <label class="radio-option">
+                <input type="radio" v-model="paymentMethod" value="transfer" name="paymentMethod" />
+                <span class="radio-label">Chuyển khoản QR</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" v-model="paymentMethod" value="cash" name="paymentMethod" />
+                <span class="radio-label">Tiền mặt khi nhận xe</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Tóm tắt chi phí -->
           <div class="summary">
+            <div class="summary-line" v-if="appliedCoupon">
+              <span>Tạm tính:</span>
+              <span>{{ subtotalPrice.toLocaleString('vi-VN') }} VNĐ</span>
+            </div>
+            <div class="summary-line discount" v-if="appliedCoupon">
+              <span>Giảm giá:</span>
+              <span>-{{ discountAmount.toLocaleString('vi-VN') }} VNĐ</span>
+            </div>
             <div class="total-box">
               <span class="label">Tổng tiền thanh toán</span>
               <span class="value">
-                {{ totalPrice ? totalPrice.toLocaleString('vi-VN') : '0' }} <span class="currency">VNĐ</span>
+                {{ finalTotalPrice ? finalTotalPrice.toLocaleString('vi-VN') : '0' }} <span class="currency">VNĐ</span>
               </span>
             </div>
-            <p v-if="totalPrice > 0 && totalPrice < 50000" class="warning">⚠️ Giá thuê tối thiểu là 50,000 VNĐ.</p>
+            <p v-if="finalTotalPrice > 0 && finalTotalPrice < 50000" class="warning">⚠️ Giá thuê tối thiểu là 50,000 VNĐ.</p>
           </div>
 
           <div class="form-actions">
@@ -128,15 +205,133 @@
 <script>
 import MotorDetailScript from "./MotorDetail.js";
 import { useToast } from "vue-toastification";
+import { ref, computed, onMounted } from "vue";
+import axios from "axios";
 
 export default {
   ...MotorDetailScript,
   setup() {
     const toast = useToast();
     const scriptSetup = MotorDetailScript.setup ? MotorDetailScript.setup() : {};
+
+    const paymentMethod = ref("transfer");
+    const couponCode = ref("");
+    const appliedCoupon = ref(null);
+    const couponMessage = ref("");
+    const isCouponApplied = ref(false);
+    const availableCoupons = ref([]);
+    const showCouponList = ref(false); // Mặc định ẩn danh sách mã
+
+    // Lấy danh sách mã giảm giá từ backend
+    const fetchAvailableCoupons = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/coupons");
+        if (Array.isArray(res.data)) {
+          const now = new Date();
+          availableCoupons.value = res.data.filter((c) => {
+            const startDate = c.start_date ? new Date(c.start_date) : null;
+            if (startDate) startDate.setHours(0, 0, 0, 0);
+
+            const endDate = c.end_date ? new Date(c.end_date) : null;
+            if (endDate) endDate.setHours(23, 59, 59, 999);
+
+            const isStarted = !startDate || startDate <= now;
+            const isNotExpired = !endDate || endDate >= now;
+            const hasUsageLimit = c.usage_limit === null || c.used_count < c.usage_limit;
+
+            return Boolean(c.is_active) && isStarted && isNotExpired && hasUsageLimit;
+          });
+        }
+      } catch (error) {
+        console.error("Lỗi lấy danh sách mã giảm giá:", error);
+      }
+    };
+
+    onMounted(() => {
+      fetchAvailableCoupons();
+    });
+
+    const subtotalPrice = computed(() => {
+      return scriptSetup.totalPrice ? scriptSetup.totalPrice.value || scriptSetup.totalPrice : 0;
+    });
+
+    const discountAmount = computed(() => {
+      if (!appliedCoupon.value) return 0;
+      return appliedCoupon.value.discount_amount || 0;
+    });
+
+    const finalTotalPrice = computed(() => {
+      if (appliedCoupon.value && appliedCoupon.value.final_amount !== undefined) {
+        return appliedCoupon.value.final_amount;
+      }
+      return Math.max(0, subtotalPrice.value - discountAmount.value);
+    });
+
+    const selectCoupon = (coupon) => {
+      if (appliedCoupon.value && appliedCoupon.value.code === coupon.code) {
+        removeCoupon();
+        return;
+      }
+      couponCode.value = coupon.code;
+      applyCoupon(coupon.code);
+    };
+
+    const applyCoupon = async (codeOverride = null) => {
+      const codeToApply = codeOverride || couponCode.value.trim();
+
+      if (!codeToApply) {
+        couponMessage.value = "Vui lòng nhập hoặc chọn mã giảm giá.";
+        isCouponApplied.value = false;
+        return;
+      }
+
+      if (subtotalPrice.value <= 0) {
+        couponMessage.value = "Vui lòng chọn thời gian thuê xe trước khi áp dụng mã.";
+        isCouponApplied.value = false;
+        return;
+      }
+
+      try {
+        const response = await axios.post("http://localhost:5000/api/coupons/apply", {
+          code: codeToApply,
+          order_amount: subtotalPrice.value,
+        });
+
+        appliedCoupon.value = response.data;
+        couponCode.value = response.data.code;
+        isCouponApplied.value = true;
+        couponMessage.value = response.data.message || "Áp dụng mã giảm giá thành công!";
+        toast.success("Áp dụng mã giảm giá thành công!");
+      } catch (error) {
+        appliedCoupon.value = null;
+        isCouponApplied.value = false;
+        couponMessage.value = error.response?.data?.message || "Mã giảm giá không hợp lệ hoặc không đủ điều kiện.";
+      }
+    };
+
+    const removeCoupon = () => {
+      appliedCoupon.value = null;
+      couponCode.value = "";
+      couponMessage.value = "";
+      isCouponApplied.value = false;
+    };
+
     return {
       ...scriptSetup,
-      toast
+      toast,
+      paymentMethod,
+      couponCode,
+      appliedCoupon,
+      couponMessage,
+      isCouponApplied,
+      availableCoupons,
+      showCouponList,
+      subtotalPrice,
+      discountAmount,
+      finalTotalPrice,
+      selectCoupon,
+      applyCoupon,
+      removeCoupon
     };
   }
 };
@@ -145,4 +340,6 @@ export default {
 <style scoped>
 @import "@/assets/style/MotorDetail.css";
 @import "@/assets/style/Toast.css";
+
+
 </style>
