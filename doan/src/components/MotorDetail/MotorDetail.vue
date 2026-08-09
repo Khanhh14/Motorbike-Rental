@@ -81,7 +81,7 @@
             </div>
           </transition>
 
-          <!-- PHẦN MÃ GIẢM GIÁ (ẨN/HIỆN THEO BẤM) -->
+          <!-- PHẦN MÃ GIẢM GIÁ -->
           <div class="coupon-section">
             <div class="coupon-header">
               <h3 class="section-subtitle">Mã giảm giá</h3>
@@ -149,6 +149,11 @@
             </div>
           </div>
 
+          <!-- Thông báo lỗi tổng quát -->
+          <p v-if="errorMessage" class="error-msg text-center my-2" style="color: red; font-weight: bold;">
+            {{ errorMessage }}
+          </p>
+
           <!-- Tóm tắt chi phí -->
           <div class="summary">
             <div class="summary-line" v-if="appliedCoupon">
@@ -204,142 +209,11 @@
 
 <script>
 import MotorDetailScript from "./MotorDetail.js";
-import { useToast } from "vue-toastification";
-import { ref, computed, onMounted } from "vue";
-import axios from "axios";
 
-export default {
-  ...MotorDetailScript,
-  setup() {
-    const toast = useToast();
-    const scriptSetup = MotorDetailScript.setup ? MotorDetailScript.setup() : {};
-
-    const paymentMethod = ref("transfer");
-    const couponCode = ref("");
-    const appliedCoupon = ref(null);
-    const couponMessage = ref("");
-    const isCouponApplied = ref(false);
-    const availableCoupons = ref([]);
-    const showCouponList = ref(false); // Mặc định ẩn danh sách mã
-
-    // Lấy danh sách mã giảm giá từ backend
-    const fetchAvailableCoupons = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/coupons");
-        if (Array.isArray(res.data)) {
-          const now = new Date();
-          availableCoupons.value = res.data.filter((c) => {
-            const startDate = c.start_date ? new Date(c.start_date) : null;
-            if (startDate) startDate.setHours(0, 0, 0, 0);
-
-            const endDate = c.end_date ? new Date(c.end_date) : null;
-            if (endDate) endDate.setHours(23, 59, 59, 999);
-
-            const isStarted = !startDate || startDate <= now;
-            const isNotExpired = !endDate || endDate >= now;
-            const hasUsageLimit = c.usage_limit === null || c.used_count < c.usage_limit;
-
-            return Boolean(c.is_active) && isStarted && isNotExpired && hasUsageLimit;
-          });
-        }
-      } catch (error) {
-        console.error("Lỗi lấy danh sách mã giảm giá:", error);
-      }
-    };
-
-    onMounted(() => {
-      fetchAvailableCoupons();
-    });
-
-    const subtotalPrice = computed(() => {
-      return scriptSetup.totalPrice ? scriptSetup.totalPrice.value || scriptSetup.totalPrice : 0;
-    });
-
-    const discountAmount = computed(() => {
-      if (!appliedCoupon.value) return 0;
-      return appliedCoupon.value.discount_amount || 0;
-    });
-
-    const finalTotalPrice = computed(() => {
-      if (appliedCoupon.value && appliedCoupon.value.final_amount !== undefined) {
-        return appliedCoupon.value.final_amount;
-      }
-      return Math.max(0, subtotalPrice.value - discountAmount.value);
-    });
-
-    const selectCoupon = (coupon) => {
-      if (appliedCoupon.value && appliedCoupon.value.code === coupon.code) {
-        removeCoupon();
-        return;
-      }
-      couponCode.value = coupon.code;
-      applyCoupon(coupon.code);
-    };
-
-    const applyCoupon = async (codeOverride = null) => {
-      const codeToApply = codeOverride || couponCode.value.trim();
-
-      if (!codeToApply) {
-        couponMessage.value = "Vui lòng nhập hoặc chọn mã giảm giá.";
-        isCouponApplied.value = false;
-        return;
-      }
-
-      if (subtotalPrice.value <= 0) {
-        couponMessage.value = "Vui lòng chọn thời gian thuê xe trước khi áp dụng mã.";
-        isCouponApplied.value = false;
-        return;
-      }
-
-      try {
-        const response = await axios.post("http://localhost:5000/api/coupons/apply", {
-          code: codeToApply,
-          order_amount: subtotalPrice.value,
-        });
-
-        appliedCoupon.value = response.data;
-        couponCode.value = response.data.code;
-        isCouponApplied.value = true;
-        couponMessage.value = response.data.message || "Áp dụng mã giảm giá thành công!";
-        toast.success("Áp dụng mã giảm giá thành công!");
-      } catch (error) {
-        appliedCoupon.value = null;
-        isCouponApplied.value = false;
-        couponMessage.value = error.response?.data?.message || "Mã giảm giá không hợp lệ hoặc không đủ điều kiện.";
-      }
-    };
-
-    const removeCoupon = () => {
-      appliedCoupon.value = null;
-      couponCode.value = "";
-      couponMessage.value = "";
-      isCouponApplied.value = false;
-    };
-
-    return {
-      ...scriptSetup,
-      toast,
-      paymentMethod,
-      couponCode,
-      appliedCoupon,
-      couponMessage,
-      isCouponApplied,
-      availableCoupons,
-      showCouponList,
-      subtotalPrice,
-      discountAmount,
-      finalTotalPrice,
-      selectCoupon,
-      applyCoupon,
-      removeCoupon
-    };
-  }
-};
+export default MotorDetailScript;
 </script>
 
 <style scoped>
 @import "@/assets/style/MotorDetail.css";
 @import "@/assets/style/Toast.css";
-
-
 </style>

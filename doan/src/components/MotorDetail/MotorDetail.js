@@ -8,6 +8,7 @@ import PaymentModal from "@/components/PaymentModal.vue";
 import { io } from "socket.io-client";
 
 export default defineComponent({
+  name: "MotorDetail",
   components: { ReviewSection, PaymentModal },
   props: {
     id: {
@@ -32,11 +33,12 @@ export default defineComponent({
     const loading = ref(false);
     const errorMessage = ref("");
     const qrCodeValue = ref("");
+    const showCouponList = ref(false);
 
     // State Thanh toán & Mã giảm giá
-    const paymentMethod = ref("transfer"); // 'transfer' (Chuyển khoản) hoặc 'cash' (Tiền mặt)
+    const paymentMethod = ref("transfer"); // 'transfer' hoặc 'cash'
     const couponCode = ref("");
-    const appliedCoupon = ref(null); // Lưu kết quả trả về từ API Backend
+    const appliedCoupon = ref(null);
     const couponMessage = ref("");
     const isCouponApplied = ref(false);
     const availableCoupons = ref([]);
@@ -98,7 +100,7 @@ export default defineComponent({
 
     const totalPrice = computed(() => subtotalPrice.value);
 
-    // Số tiền giảm giá lấy từ kết quả Backend hoặc tính nhẩm phía Client
+    // Số tiền giảm giá
     const discountAmount = computed(() => {
       if (!appliedCoupon.value) return 0;
       return appliedCoupon.value.discount_amount || 0;
@@ -112,15 +114,12 @@ export default defineComponent({
       return Math.max(0, subtotalPrice.value - discountAmount.value);
     });
 
-    // === API COUPONS (Khớp với Controller Backend) ===
-
-    // Lấy danh sách mã giảm giá để người dùng chọn nhanh
+    // === API COUPONS ===
     const fetchAvailableCoupons = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/coupons");
         if (Array.isArray(res.data)) {
           const now = new Date();
-          // Lọc mã hợp lệ hiển thị lên giao diện
           availableCoupons.value = res.data.filter((c) => {
             const isNotExpired = (!c.start_date || new Date(c.start_date) <= now) && 
                                  (!c.end_date || new Date(c.end_date) >= now);
@@ -133,7 +132,6 @@ export default defineComponent({
       }
     };
 
-    // Gọi API `applyCoupon` của Backend để kiểm tra & tính tiền
     const applyCoupon = async (codeOverride = null) => {
       const codeToApply = codeOverride || couponCode.value.trim();
 
@@ -155,7 +153,6 @@ export default defineComponent({
           order_amount: subtotalPrice.value,
         });
 
-        // Áp dụng thành công
         appliedCoupon.value = res.data;
         couponCode.value = res.data.code;
         isCouponApplied.value = true;
@@ -167,7 +164,6 @@ export default defineComponent({
       }
     };
 
-    // Chọn mã từ thẻ danh sách
     const selectCoupon = (coupon) => {
       if (appliedCoupon.value && appliedCoupon.value.code === coupon.code) {
         removeCoupon();
@@ -177,7 +173,6 @@ export default defineComponent({
       applyCoupon(coupon.code);
     };
 
-    // Hủy mã giảm giá
     const removeCoupon = () => {
       appliedCoupon.value = null;
       couponCode.value = "";
@@ -263,7 +258,7 @@ export default defineComponent({
         discount_amount: discountAmount.value,
         total_price: finalTotalPrice.value,
         coupon_id: appliedCoupon.value ? appliedCoupon.value.coupon_id : null,
-        payment_method: paymentMethod.value, // 'transfer' hoặc 'cash'
+        payment_method: paymentMethod.value,
       };
 
       if (isLoggedIn.value) {
@@ -293,7 +288,6 @@ export default defineComponent({
 
         rentalOrder.value = { id: rentalId, totalPrice: finalTotalPrice.value };
 
-        // Kiểm tra hình thức thanh toán
         if (paymentMethod.value === "transfer") {
           showPaymentModal.value = true;
           latestContentNumber.value += 1;
@@ -312,7 +306,7 @@ export default defineComponent({
       }
     };
 
-    // Tạo QR thanh toán ngân hàng
+    // Tạo QR thanh toán
     const generateQRCode = async () => {
       try {
         const response = await axios.post("http://localhost:5000/api/qr", {
@@ -389,6 +383,7 @@ export default defineComponent({
       couponMessage,
       isCouponApplied,
       availableCoupons,
+      showCouponList,
       selectCoupon,
       applyCoupon,
       removeCoupon,
