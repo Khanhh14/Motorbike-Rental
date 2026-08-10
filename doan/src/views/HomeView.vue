@@ -1,24 +1,128 @@
 <template>
-  <section class="hero-section">
-    <div class="overlay">
-      <h1>Travalizer - Thuê xe máy giá rẻ</h1>
-      <p>Trang Web cho thuê xe máy dành cho những người du lịch tại Phú Yên</p>
-    </div>
-  </section>
-
-  <section class="rental-locations">
-    <h2>ĐIỂM ĐẾN HẤP DẪN Ở PHÚ YÊN</h2>
-    <div class="location-container">
-      <div 
-        v-for="(item, index) in locations" 
-        :key="index" 
-        class="location"
-      >
-        <img :src="item.image" :alt="item.name" />
-        <span>{{ item.name }}</span>
+  <div class="home-page">
+    <!-- Hero Section với hiệu ứng parallax -->
+    <section class="hero-section">
+      <div class="hero-overlay">
+        <div class="hero-content">
+          <div class="hero-badge">
+            <span class="badge-icon">🏍️</span>
+            Khám phá Phú Yên
+          </div>
+          <h1 class="hero-title">
+            Thuê xe máy giá rẻ
+            <span class="highlight">Travalizer</span>
+          </h1>
+          <p class="hero-description">
+            Trải nghiệm hành trình khám phá Phú Yên với những chiếc xe máy chất lượng,
+            giá cả phải chăng và dịch vụ tận tâm
+          </p>
+          <div class="hero-actions">
+            <button class="btn-primary">
+              <span>Đặt xe ngay</span>
+              <i class="arrow-icon">→</i>
+            </button>
+            <button class="btn-secondary">
+              <span>Xem xe</span>
+            </button>
+          </div>
+          <div class="hero-stats">
+            <div class="stat-item">
+              <span class="stat-number">50+</span>
+              <span class="stat-label">Xe máy</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-number">1000+</span>
+              <span class="stat-label">Khách hàng</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <span class="stat-number">4.9⭐</span>
+              <span class="stat-label">Đánh giá</span>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </section>
+      <div class="floating-card">
+        <div class="card-content">
+          <div class="card-icon">🚀</div>
+          <div>
+            <h4>Giảm 10%</h4>
+            <p>Cho đơn hàng đầu tiên</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section Điểm đến hấp dẫn -->
+    <section class="destinations-section">
+      <div class="section-header">
+        <div class="header-left">
+          <span class="section-tag">📍 ĐIỂM ĐẾN</span>
+          <h2 class="section-title">Những địa điểm <span class="highlight">hấp dẫn</span> ở Phú Yên</h2>
+        </div>
+        <p class="section-subtitle">
+          Khám phá những điểm đến tuyệt đẹp tại Phú Yên với xe máy chất lượng từ Travalizer
+        </p>
+      </div>
+
+      <div class="location-grid">
+        <div 
+          v-for="(item, index) in locations" 
+          :key="index" 
+          class="location-card"
+          :style="{ animationDelay: `${index * 0.1}s` }"
+        >
+          <div class="location-image">
+            <img :src="item.image" :alt="item.name" />
+            <div class="location-overlay">
+              <span class="location-number">#{{ String(index + 1).padStart(2, '0') }}</span>
+            </div>
+          </div>
+          <div class="location-info">
+            <h3>{{ item.name }}</h3>
+            <div class="location-meta">
+              <span class="distance"></span>
+              <span class="rating"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="view-all-container">
+        <button class="btn-view-all">
+          Xem tất cả điểm đến
+          <i class="arrow-icon">→</i>
+        </button>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+      <div class="features-container">
+        <div class="feature-item">
+          <div class="feature-icon">🛵</div>
+          <h4>Xe đa dạng</h4>
+          <p>Nhiều loại xe phù hợp với mọi nhu cầu</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">💰</div>
+          <h4>Giá rẻ</h4>
+          <p>Giá cả cạnh tranh, không phát sinh</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🔧</div>
+          <h4>Bảo dưỡng</h4>
+          <p>Xe được kiểm tra kỹ lưỡng mỗi ngày</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🤝</div>
+          <h4>Hỗ trợ 24/7</h4>
+          <p>Đội ngũ hỗ trợ tận tâm</p>
+        </div>
+      </div>
+    </section>
+  </div>
 </template>
 
 <script>
@@ -43,4 +147,5 @@ export default {
 
 <style scoped>
 @import "@/assets/style/home.css";
+
 </style>
