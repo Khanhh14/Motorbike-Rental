@@ -4,6 +4,34 @@ const statsController = require("../controllers/stats.controllers");
 
 /**
  * @openapi
+ * /api/stats/landing:
+ *   get:
+ *     summary: Lấy dữ liệu thống kê hiển thị trang chủ (Số xe, số khách hàng, đánh giá trung bình)
+ *     tags: [Statistics]
+ *     responses:
+ *       200:
+ *         description: Lấy dữ liệu thống kê landing page thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total_bikes:
+ *                   type: integer
+ *                   example: 50
+ *                 total_customers:
+ *                   type: integer
+ *                   example: 1000
+ *                 avg_rating:
+ *                   type: number
+ *                   example: 4.9
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get('/landing', statsController.getLandingStats);
+
+/**
+ * @openapi
  * /api/stats/summary:
  *   get:
  *     summary: Lấy tổng quan số liệu thống kê (Tổng doanh thu, số đơn, số xe...)

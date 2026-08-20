@@ -118,7 +118,7 @@
                 <span v-else>{{ formatCurrency(item.discount_value) }}</span>
               </td>
               <td>{{ formatCurrency(item.min_order_value) }}</td>
-              <td>{{ item.used_count }} / {{ item.usage_limit || '∞' }}</td>
+              <td>{{ item.used_count || 0 }} / {{ item.usage_limit || '∞' }}</td>
               <td class="col-date">
                 {{ formatDate(item.start_date) }} - {{ formatDate(item.end_date) }}
               </td>
@@ -193,7 +193,7 @@
           </div>
 
           <div class="form-group">
-            <label>Giới hạn số lần dùng (NULL = Không giới hạn):</label>
+            <label>Giới hạn số lần dùng (Bỏ trống = Không giới hạn):</label>
             <input v-model.number="formData.usage_limit" type="number" placeholder="VD: 100" />
           </div>
 
@@ -287,7 +287,7 @@ export default {
     },
     applyStatistics() {
       this.totalCoupons = this.coupons.length;
-      this.activeCoupons = this.coupons.filter(c => c.is_active).length;
+      this.activeCoupons = this.coupons.filter(c => Boolean(c.is_active)).length;
       this.inactiveCoupons = this.coupons.filter(c => !c.is_active).length;
       this.totalUsed = this.coupons.reduce((acc, c) => acc + (c.used_count || 0), 0);
     },
@@ -295,7 +295,7 @@ export default {
       let result = this.coupons;
 
       if (this.selectedStatus === "active") {
-        result = result.filter(c => c.is_active);
+        result = result.filter(c => Boolean(c.is_active));
       } else if (this.selectedStatus === "inactive") {
         result = result.filter(c => !c.is_active);
       }
@@ -331,16 +331,24 @@ export default {
     formatDatetimeLocal(dateStr) {
       if (!dateStr) return "";
       const d = new Date(dateStr);
-      const iso = d.toISOString();
-      return iso.substring(0, 16);
+      if (isNaN(d.getTime())) return "";
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     },
     openModal(mode, item = null) {
       this.isEdit = mode === 'edit';
       if (this.isEdit && item) {
         this.formData = {
-          ...item,
+          id: item.id,
+          code: item.code || "",
+          discount_type: item.discount_type || "percentage",
+          discount_value: item.discount_value ?? 0,
+          max_discount_amount: item.max_discount_amount ?? null,
+          min_order_value: item.min_order_value ?? 0,
+          usage_limit: item.usage_limit ?? null,
           start_date: this.formatDatetimeLocal(item.start_date),
-          end_date: this.formatDatetimeLocal(item.end_date)
+          end_date: this.formatDatetimeLocal(item.end_date),
+          is_active: Boolean(item.is_active)
         };
       } else {
         this.formData = {
@@ -361,20 +369,40 @@ export default {
     closeModal() {
       this.showModal = false;
     },
+    preparePayload() {
+      return {
+        code: this.formData.code.trim().toUpperCase(),
+        discount_type: this.formData.discount_type,
+        discount_value: Number(this.formData.discount_value) || 0,
+        max_discount_amount: this.formData.max_discount_amount !== "" && this.formData.max_discount_amount !== null 
+          ? Number(this.formData.max_discount_amount) 
+          : null,
+        min_order_value: Number(this.formData.min_order_value) || 0,
+        usage_limit: this.formData.usage_limit !== "" && this.formData.usage_limit !== null 
+          ? Number(this.formData.usage_limit) 
+          : null,
+        start_date: this.formData.start_date ? new Date(this.formData.start_date).toISOString() : null,
+        end_date: this.formData.end_date ? new Date(this.formData.end_date).toISOString() : null,
+        is_active: Boolean(this.formData.is_active)
+      };
+    },
     async saveCoupon() {
       try {
+        const payload = this.preparePayload();
+
         if (this.isEdit) {
-          await axios.put(`http://localhost:5000/api/coupons/${this.formData.id}`, this.formData);
+          await axios.put(`http://localhost:5000/api/coupons/${this.formData.id}`, payload);
           this.toast.success("Cập nhật mã giảm giá thành công!");
         } else {
-          await axios.post("http://localhost:5000/api/coupons", this.formData);
+          await axios.post("http://localhost:5000/api/coupons", payload);
           this.toast.success("Tạo mã giảm giá thành công!");
         }
         this.closeModal();
         await this.fetchCoupons();
       } catch (error) {
         console.error("Lỗi khi lưu mã giảm giá:", error);
-        this.toast.error(error.response?.data?.error || "Lưu mã giảm giá thất bại.");
+        const serverMessage = error.response?.data?.message || error.response?.data?.error;
+        this.toast.error(serverMessage || "Lưu mã giảm giá thất bại.");
       }
     },
     async deleteCoupon(id) {

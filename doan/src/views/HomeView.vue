@@ -4,10 +4,7 @@
     <section class="hero-section">
       <div class="hero-overlay">
         <div class="hero-content">
-          <div class="hero-badge">
-            <span class="badge-icon">🏍️</span>
-            Khám phá Phú Yên
-          </div>
+          
           <h1 class="hero-title">
             Thuê xe máy giá rẻ
             <span class="highlight">Travalizer</span>
@@ -27,17 +24,17 @@
           </div>
           <div class="hero-stats">
             <div class="stat-item">
-              <span class="stat-number">50+</span>
+              <span class="stat-number">{{ stats.total_bikes }}+</span>
               <span class="stat-label">Xe máy</span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item">
-              <span class="stat-number">1000+</span>
+              <span class="stat-number">{{ stats.total_customers }}+</span>
               <span class="stat-label">Khách hàng</span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item">
-              <span class="stat-number">4.9⭐</span>
+              <span class="stat-number">{{ stats.avg_rating }}⭐</span>
               <span class="stat-label">Đánh giá</span>
             </div>
           </div>
@@ -58,8 +55,8 @@
     <section class="destinations-section">
       <div class="section-header">
         <div class="header-left">
-          <span class="section-tag">📍 ĐIỂM ĐẾN</span>
-          <h2 class="section-title">Những địa điểm <span class="highlight">hấp dẫn</span> ở Phú Yên</h2>
+          <span class="section-tag">ĐIỂM ĐẾN</span>
+          <h2 class="section-title">NHỮNG ĐỊA ĐIỂM <span class="highlight">HẤP DẪN</span> Ở PHÚ YÊN</h2>
         </div>
         <p class="section-subtitle">
           Khám phá những điểm đến tuyệt đẹp tại Phú Yên với xe máy chất lượng từ Travalizer
@@ -126,10 +123,17 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   name: 'HomeView',
   data() {
     return {
+      stats: {
+        total_bikes: 0,
+        total_customers: 0,
+        avg_rating: 5.0
+      },
       locations: [
         { name: 'THÁP NGHINH PHONG', image: new URL('@/assets/image/a1.jpg', import.meta.url).href },
         { name: 'GÀNH ĐÁ ĐĨA', image: new URL('@/assets/image/a3.jpg', import.meta.url).href },
@@ -141,11 +145,29 @@ export default {
         { name: 'HÒN YẾN', image: new URL('@/assets/image/a9.jpg', import.meta.url).href }
       ]
     };
+  },
+  methods: {
+    async fetchLandingStats() {
+      try {
+        const response = await axios.get("http://localhost:5000/api/stats/landing");
+        if (response.data) {
+          this.stats = {
+            total_bikes: response.data.total_bikes ?? 0,
+            total_customers: response.data.total_customers ?? 0,
+            avg_rating: response.data.avg_rating ?? 5.0
+          };
+        }
+      } catch (error) {
+        console.error("Lỗi khi tải thông kê trang chủ:", error);
+      }
+    }
+  },
+  mounted() {
+    this.fetchLandingStats();
   }
 };
 </script>
 
 <style scoped>
 @import "@/assets/style/home.css";
-
 </style>
