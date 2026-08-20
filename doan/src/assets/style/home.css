@@ -476,3 +476,11 @@
     display: none;
   }
 }
+.feature-icon {
+  font-size: 2rem;
+  color: #10b981; /* Màu xanh lá nổi bật cho icon */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 12px;
+}

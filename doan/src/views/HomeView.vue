@@ -98,22 +98,30 @@
     <section class="features-section">
       <div class="features-container">
         <div class="feature-item">
-          <div class="feature-icon">🛵</div>
+          <div class="feature-icon">
+            <font-awesome-icon :icon="['fas', 'motorcycle']" />
+          </div>
           <h4>Xe đa dạng</h4>
           <p>Nhiều loại xe phù hợp với mọi nhu cầu</p>
         </div>
         <div class="feature-item">
-          <div class="feature-icon">💰</div>
+          <div class="feature-icon">
+            <font-awesome-icon :icon="['fas', 'sack-dollar']" />
+          </div>
           <h4>Giá rẻ</h4>
           <p>Giá cả cạnh tranh, không phát sinh</p>
         </div>
         <div class="feature-item">
-          <div class="feature-icon">🔧</div>
+          <div class="feature-icon">
+            <font-awesome-icon :icon="['fas', 'wrench']" />
+          </div>
           <h4>Bảo dưỡng</h4>
           <p>Xe được kiểm tra kỹ lưỡng mỗi ngày</p>
         </div>
         <div class="feature-item">
-          <div class="feature-icon">🤝</div>
+          <div class="feature-icon">
+            <font-awesome-icon :icon="['fas', 'handshake-angle']" />
+          </div>
           <h4>Hỗ trợ 24/7</h4>
           <p>Đội ngũ hỗ trợ tận tâm</p>
         </div>
@@ -170,4 +178,6 @@ export default {
 
 <style scoped>
 @import "@/assets/style/home.css";
+
+
 </style>
