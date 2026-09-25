@@ -1,4 +1,6 @@
 import { library } from "@fortawesome/fontawesome-svg-core";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+
 import { faCreditCard } from "@fortawesome/free-regular-svg-icons";
 import { 
   faHeadset, 
@@ -6,10 +8,16 @@ import {
   faMotorcycle, 
   faSackDollar, 
   faWrench, 
-  faHandshakeAngle 
+  faHandshakeAngle,
+  faClock,
+  faHeart,
+  faLightbulb,
+  faCalendarDays,
+  faTriangleExclamation,
+  faThumbtack,      // Thêm mới
+  faHandPointRight  // Thêm mới
 } from "@fortawesome/free-solid-svg-icons";
 
-// Thêm các icon vào thư viện
 library.add(
   faCreditCard, 
   faHeadset, 
@@ -17,5 +25,14 @@ library.add(
   faMotorcycle, 
   faSackDollar, 
   faWrench, 
-  faHandshakeAngle
+  faHandshakeAngle,
+  faClock,
+  faHeart,
+  faLightbulb,
+  faCalendarDays,
+  faTriangleExclamation,
+  faThumbtack,
+  faHandPointRight
 );
+
+export default FontAwesomeIcon;
