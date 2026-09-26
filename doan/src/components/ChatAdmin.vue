@@ -2,7 +2,10 @@
   <div class="chat-page">
     <header class="hero">
       <div class="hero-left">
-        <h1>Hello, Admin <span class="wave">👋</span></h1>
+        <h1>
+          Hello, Admin 
+          <font-awesome-icon :icon="['fas', 'handshake-angle']" class="wave-icon" />
+        </h1>
         <p class="sub">Bảng điều khiển hỗ trợ khách hàng</p>
       </div>
       <div class="hero-right">
@@ -14,7 +17,9 @@
       <aside class="panel contacts">
         <div class="contacts-head">
           <input v-model="q" class="search" placeholder="Tìm kiếm khách hoặc tin nhắn..." />
-          <button class="icon-btn" @click="fetchConvs" title="Làm mới">⟳</button>
+          <button class="icon-btn" @click="fetchConvs" title="Làm mới">
+            <font-awesome-icon :icon="['fas', 'arrows-rotate']" :spin="loading" />
+          </button>
         </div>
 
         <ul class="contacts-list">
@@ -32,7 +37,9 @@
                 <div class="preview">{{ c.lastText || 'Chào bạn!' }}</div>
               </div>
               <div class="meta">
-                <span class="dot" v-if="c.onlineCount>0" title="Online">●</span>
+                <span class="dot" v-if="c.onlineCount>0" title="Online">
+                  <font-awesome-icon :icon="['fas', 'circle']" class="status-online-dot" />
+                </span>
                 <span class="unread" v-if="c.unreadCount">{{ c.unreadCount }}</span>
               </div>
             </button>
@@ -45,10 +52,15 @@
           <div class="chat-avatar">{{ (activeConversation && activeConversation.customerName) ? activeConversation.customerName.charAt(0).toUpperCase() : 'K' }}</div>
           <div class="chat-title">
             <div class="name">{{ activeConversation?.customerName || shortId(activeConv) || 'Chọn một khách' }}</div>
-            <div class="status">{{ activeConversation ? (activeConversation.onlineCount>0 ? 'Online' : 'Offline') : '—' }}</div>
+            <div class="status" :class="{ 'is-online': activeConversation?.onlineCount > 0 }">
+              <font-awesome-icon :icon="['fas', 'circle']" class="status-dot-sm" v-if="activeConversation" />
+              {{ activeConversation ? (activeConversation.onlineCount>0 ? 'Online' : 'Offline') : '—' }}
+            </div>
           </div>
           <div class="chat-actions">
-            <button class="icon-btn" @click="fetchConvs">⟳</button>
+            <button class="icon-btn" @click="fetchConvs" title="Làm mới">
+              <font-awesome-icon :icon="['fas', 'arrows-rotate']" :spin="loading" />
+            </button>
           </div>
         </div>
 
@@ -56,7 +68,10 @@
           <div v-if="!activeConv" class="empty-chat">Chọn một cuộc trò chuyện bên trái để bắt đầu.</div>
 
           <template v-else>
-            <div v-if="messages.length === 0" class="empty-chat">Chưa có tin nhắn — hãy gửi lời chào 👋</div>
+            <div v-if="messages.length === 0" class="empty-chat">
+              Chưa có tin nhắn — hãy gửi lời chào
+              <font-awesome-icon :icon="['fas', 'handshake-angle']" class="empty-greet-icon" />
+            </div>
 
             <div v-for="(m, idx) in messages" :key="m.id" class="msg" :class="m.from === 'admin' ? 'out' : 'in'">
               <div class="bubble">
@@ -68,9 +83,13 @@
         </div>
 
         <form v-if="activeConv" class="chat-input" @submit.prevent="send">
-          <button type="button" class="icon-btn">😊</button>
+          <button type="button" class="icon-btn" title="Emoji">
+            <font-awesome-icon :icon="['far', 'face-smile']" class="btn-icon-smile" />
+          </button>
           <input v-model="draft" placeholder="Nhập trả lời..." />
-          <button class="send" :disabled="!draft.trim()">➤</button>
+          <button class="send" :disabled="!draft.trim()" title="Gửi">
+            <font-awesome-icon :icon="['fas', 'paper-plane']" />
+          </button>
         </form>
       </section>
     </main>
@@ -78,7 +97,7 @@
 </template>
 
 <script setup>
-import "@/assets/style/ChatAdmin.css" // chỉ import ở đây; không cần <style>@import</style>
+import "@/assets/style/ChatAdmin.css"
 import { ref, computed, onMounted, onBeforeUnmount } from "vue"
 import { socket } from "@/services/socket"
 
@@ -122,13 +141,11 @@ function connectAsAdmin() {
 
   socket.on("admin:conversations", (list) => {
     conversations.value = list
-    // nếu chưa chọn phòng nào, tự chọn phòng đầu tiên (nếu có)
     if (!activeConv.value && filteredConvs.value.length > 0) {
       selectConv(filteredConvs.value[0].id)
     }
   })
 
-  // debounce để tránh fetch liên tục
   let timer = null
   socket.on("rooms:update", () => {
     clearTimeout(timer)
@@ -156,7 +173,6 @@ function fetchConvs() {
 
 function selectConv(id) {
   activeConv.value = id
-  // không cần disconnect; chỉ join sang phòng mới
   socket.emit("join", { conversationId: id, isAdmin: true, nickname: "Admin" })
 }
 
@@ -187,3 +203,40 @@ onBeforeUnmount(() => {
   socket.off("message")
 })
 </script>
+
+<style scoped>
+.wave-icon {
+  color: #f59e0b;
+  margin-left: 6px;
+  font-size: 26px;
+  vertical-align: middle;
+}
+
+.status-online-dot {
+  font-size: 9px;
+  color: #10b981;
+}
+
+.status-dot-sm {
+  font-size: 7px;
+  margin-right: 4px;
+}
+
+.status.is-online {
+  color: #10b981;
+}
+
+.btn-icon-smile {
+  font-size: 19px;
+  color: #f59e0b;
+}
+
+.empty-greet-icon {
+  color: #f59e0b;
+  margin-left: 4px;
+}
+
+.send svg {
+  font-size: 15px;
+}
+</style>
