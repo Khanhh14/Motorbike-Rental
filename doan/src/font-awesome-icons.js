@@ -19,13 +19,15 @@ import {
   faArrowsRotate,
   faPaperPlane,
   faCircle,
-  // Thêm mới cho Sidebar:
   faTags,
   faKey,
   faTicket,
   faStar,
   faReceipt,
-  faChartPie
+  faChartPie,
+  // Thêm mới cho trang chủ:
+  faArrowRight,
+  faRocket
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -52,7 +54,9 @@ library.add(
   faTicket,
   faStar,
   faReceipt,
-  faChartPie
+  faChartPie,
+  faArrowRight,
+  faRocket
 );
 
 export default FontAwesomeIcon;

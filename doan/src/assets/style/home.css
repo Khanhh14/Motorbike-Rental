@@ -484,3 +484,47 @@
   align-items: center;
   margin-bottom: 12px;
 }
+/* Mũi tên trong các nút */
+.arrow-icon {
+  margin-left: 8px;
+  transition: transform 0.25s ease;
+}
+
+.btn-primary:hover .arrow-icon,
+.btn-view-all:hover .arrow-icon {
+  transform: translateX(4px);
+}
+
+/* Ngôi sao đánh giá */
+.icon-star-rating {
+  color: #facc15;
+  font-size: 18px;
+  margin-left: 3px;
+}
+
+/* Icon tên lửa floating card */
+.icon-rocket {
+  color: #ff4d4f;
+  font-size: 26px;
+}
+
+/* Màu sắc các icon ở Section Features */
+.icon-bike {
+  color: #2563eb;
+  font-size: 22px;
+}
+
+.icon-money {
+  color: #16a34a;
+  font-size: 22px;
+}
+
+.icon-wrench {
+  color: #ea580c;
+  font-size: 22px;
+}
+
+.icon-support {
+  color: #9333ea;
+  font-size: 22px;
+}

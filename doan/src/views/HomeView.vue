@@ -4,7 +4,6 @@
     <section class="hero-section">
       <div class="hero-overlay">
         <div class="hero-content">
-          
           <h1 class="hero-title">
             Thuê xe máy giá rẻ
             <span class="highlight">Travalizer</span>
@@ -16,7 +15,7 @@
           <div class="hero-actions">
             <button class="btn-primary">
               <span>Đặt xe ngay</span>
-              <i class="arrow-icon">→</i>
+              <font-awesome-icon :icon="['fas', 'arrow-right']" class="arrow-icon" />
             </button>
             <button class="btn-secondary">
               <span>Xem xe</span>
@@ -34,7 +33,10 @@
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item">
-              <span class="stat-number">{{ stats.avg_rating }}⭐</span>
+              <span class="stat-number">
+                {{ stats.avg_rating }}
+                <font-awesome-icon :icon="['fas', 'star']" class="icon-star-rating" />
+              </span>
               <span class="stat-label">Đánh giá</span>
             </div>
           </div>
@@ -42,7 +44,9 @@
       </div>
       <div class="floating-card">
         <div class="card-content">
-          <div class="card-icon">🚀</div>
+          <div class="card-icon">
+            <font-awesome-icon :icon="['fas', 'rocket']" class="icon-rocket" />
+          </div>
           <div>
             <h4>Giảm 10%</h4>
             <p>Cho đơn hàng đầu tiên</p>
@@ -89,7 +93,7 @@
       <div class="view-all-container">
         <button class="btn-view-all">
           Xem tất cả điểm đến
-          <i class="arrow-icon">→</i>
+          <font-awesome-icon :icon="['fas', 'arrow-right']" class="arrow-icon" />
         </button>
       </div>
     </section>
@@ -98,29 +102,29 @@
     <section class="features-section">
       <div class="features-container">
         <div class="feature-item">
-          <div class="feature-icon">
-            <font-awesome-icon :icon="['fas', 'motorcycle']" />
+          <div class="feature-icon icon-bg-blue">
+            <font-awesome-icon :icon="['fas', 'motorcycle']" class="icon-bike" />
           </div>
           <h4>Xe đa dạng</h4>
           <p>Nhiều loại xe phù hợp với mọi nhu cầu</p>
         </div>
         <div class="feature-item">
-          <div class="feature-icon">
-            <font-awesome-icon :icon="['fas', 'sack-dollar']" />
+          <div class="feature-icon icon-bg-green">
+            <font-awesome-icon :icon="['fas', 'sack-dollar']" class="icon-money" />
           </div>
           <h4>Giá rẻ</h4>
           <p>Giá cả cạnh tranh, không phát sinh</p>
         </div>
         <div class="feature-item">
-          <div class="feature-icon">
-            <font-awesome-icon :icon="['fas', 'wrench']" />
+          <div class="feature-icon icon-bg-orange">
+            <font-awesome-icon :icon="['fas', 'wrench']" class="icon-wrench" />
           </div>
           <h4>Bảo dưỡng</h4>
           <p>Xe được kiểm tra kỹ lưỡng mỗi ngày</p>
         </div>
         <div class="feature-item">
-          <div class="feature-icon">
-            <font-awesome-icon :icon="['fas', 'handshake-angle']" />
+          <div class="feature-icon icon-bg-purple">
+            <font-awesome-icon :icon="['fas', 'handshake-angle']" class="icon-support" />
           </div>
           <h4>Hỗ trợ 24/7</h4>
           <p>Đội ngũ hỗ trợ tận tâm</p>
@@ -178,6 +182,5 @@ export default {
 
 <style scoped>
 @import "@/assets/style/home.css";
-
 
 </style>
