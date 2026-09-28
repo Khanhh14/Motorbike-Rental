@@ -25,9 +25,11 @@ import {
   faStar,
   faReceipt,
   faChartPie,
-  // Thêm mới cho trang chủ:
   faArrowRight,
-  faRocket
+  faRocket,
+  // Thêm mới cho Chat Popup:
+  faCommentDots,
+  faXmark
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -56,7 +58,9 @@ library.add(
   faReceipt,
   faChartPie,
   faArrowRight,
-  faRocket
+  faRocket,
+  faCommentDots,
+  faXmark
 );
 
 export default FontAwesomeIcon;

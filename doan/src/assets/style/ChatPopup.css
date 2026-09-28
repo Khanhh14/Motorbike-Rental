@@ -136,3 +136,43 @@
   opacity: .5;
   cursor: not-allowed;
 }
+/* Icon nút nổi Chat */
+.fab-icon {
+  margin-right: 6px;
+  font-size: 18px;
+  color: #fff;
+}
+
+/* Header popup */
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-icon {
+  font-size: 16px;
+  color: #38bdf8;
+}
+
+.close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.close:hover {
+  transform: scale(1.15);
+}
+
+/* Nút gửi tin nhắn */
+.send-icon {
+  margin-right: 4px;
+  font-size: 13px;
+}
