@@ -1,6 +1,6 @@
 <template>
   <div class="home-page">
-    <!-- Hero Section với thanh Quick Booking -->
+    <!-- Hero Section -->
     <section class="hero-section">
       <div class="hero-overlay">
         <div class="hero-content">
@@ -17,45 +17,12 @@
           </p>
 
           <div class="hero-actions">
-            <button class="btn-primary" @click="scrollToBooking">
+            <button class="btn-primary" @click="$router?.push('/bikes')">
               <span>Đặt xe ngay</span>
               <font-awesome-icon :icon="['fas', 'arrow-right']" class="arrow-icon" />
             </button>
             <button class="btn-secondary">
               <span>Xem bảng giá xe</span>
-            </button>
-          </div>
-
-          <!-- Quick Search Bar -->
-          <div class="quick-booking-card" id="quick-booking">
-            <div class="input-group">
-              <label><font-awesome-icon :icon="['fas', 'location-dot']" /> Điểm nhận xe</label>
-              <select v-model="bookingForm.pickupLocation">
-                <option value="station">Ga Tuy Hòa</option>
-                <option value="airport">Sân bay Tuy Hòa</option>
-                <option value="hotel">Nội thành Tuy Hòa (Khách sạn)</option>
-              </select>
-            </div>
-            <div class="input-group">
-              <label><font-awesome-icon :icon="['fas', 'calendar-days']" /> Ngày nhận</label>
-              <input type="date" v-model="bookingForm.pickupDate" />
-            </div>
-            <div class="input-group">
-              <label><font-awesome-icon :icon="['fas', 'calendar-check']" /> Ngày trả</label>
-              <input type="date" v-model="bookingForm.returnDate" />
-            </div>
-            <div class="input-group">
-              <label><font-awesome-icon :icon="['fas', 'motorcycle']" /> Dòng xe</label>
-              <select v-model="bookingForm.vehicleType">
-                <option value="all">Tất cả xe</option>
-                <option value="scooter">Xe tay ga (Vision, AirBlade)</option>
-                <option value="manual">Xe số (Wave, Sirius)</option>
-                <option value="clutch">Xe côn tay (Winner, Exciter)</option>
-              </select>
-            </div>
-            <button class="btn-search-bikes" @click="searchBikes">
-              <font-awesome-icon :icon="['fas', 'magnifying-glass']" />
-              <span>Tìm xe</span>
             </button>
           </div>
 
@@ -78,18 +45,6 @@
               </span>
               <span class="stat-label">Đánh giá 5 sao</span>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="floating-card">
-        <div class="card-content">
-          <div class="card-icon">
-            <font-awesome-icon :icon="['fas', 'gift']" class="icon-gift" />
-          </div>
-          <div>
-            <h4>Tặng 2 nón bảo hiểm</h4>
-            <p>+ Bản đồ du lịch & áo mưa miễn phí</p>
           </div>
         </div>
       </div>
@@ -129,7 +84,7 @@
       </div>
     </section>
 
-    <!-- Điểm đến hấp dẫn (Đã thêm khoảng cách & thời gian phượt) -->
+    <!-- Điểm đến hấp dẫn -->
     <section class="destinations-section">
       <div class="section-header">
         <div class="header-left">
@@ -247,12 +202,6 @@ export default {
         total_customers: 0,
         avg_rating: 5.0
       },
-      bookingForm: {
-        pickupLocation: 'station',
-        pickupDate: new Date().toISOString().slice(0, 10),
-        returnDate: '',
-        vehicleType: 'all'
-      },
       locations: [
         { 
           name: 'THÁP NGHINH PHONG', 
@@ -344,17 +293,6 @@ export default {
       } catch (error) {
         console.error("Lỗi khi tải thông kê trang chủ:", error);
       }
-    },
-    scrollToBooking() {
-      const el = document.getElementById('quick-booking');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    },
-    searchBikes() {
-      // Điều hướng sang trang /bikes kèm query parameters
-      this.$router?.push({
-        path: '/bikes',
-        query: { ...this.bookingForm }
-      });
     }
   },
   mounted() {
