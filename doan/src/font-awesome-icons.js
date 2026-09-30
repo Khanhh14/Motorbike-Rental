@@ -27,9 +27,14 @@ import {
   faChartPie,
   faArrowRight,
   faRocket,
-  // Thêm mới cho Chat Popup:
   faCommentDots,
-  faXmark
+  faXmark,
+  // Thêm mới cho 3 bước quy trình & trang chủ:
+  faMobileScreenButton,
+  faIdCard,
+  faRoute,
+  faTruckFast,
+  faRoad
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -60,7 +65,12 @@ library.add(
   faArrowRight,
   faRocket,
   faCommentDots,
-  faXmark
+  faXmark,
+  faMobileScreenButton,
+  faIdCard,
+  faRoute,
+  faTruckFast,
+  faRoad
 );
 
 export default FontAwesomeIcon;
