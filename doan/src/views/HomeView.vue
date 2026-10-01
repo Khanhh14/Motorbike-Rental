@@ -171,20 +171,33 @@
         <span class="section-tag">ĐÁNH GIÁ THỰC TẾ</span>
         <h2 class="section-title">KHÁCH HÀNG NÓI GÌ VỀ <span class="highlight">TRAVALIZER</span></h2>
       </div>
-      <div class="testimonials-grid">
-        <div class="testimonial-card" v-for="(review, idx) in reviews" :key="idx">
+
+      <!-- Danh sách 3 review nổi bật từ CSDL -->
+      <div class="testimonials-grid" v-if="reviews.length > 0">
+        <div class="testimonial-card" v-for="review in reviews" :key="review.id">
           <div class="stars">
-            <font-awesome-icon :icon="['fas', 'star']" class="icon-star-gold" v-for="s in 5" :key="s" />
+            <font-awesome-icon 
+              :icon="['fas', 'star']" 
+              class="icon-star-gold" 
+              v-for="s in (review.rating || 5)" 
+              :key="s" 
+            />
           </div>
           <p class="review-text">“{{ review.comment }}”</p>
           <div class="reviewer">
-            <div class="reviewer-avatar">{{ review.author.charAt(0) }}</div>
+            <div class="reviewer-avatar">
+              {{ review.author ? review.author.trim().charAt(0).toUpperCase() : 'K' }}
+            </div>
             <div class="reviewer-info">
               <strong>{{ review.author }}</strong>
               <small>{{ review.origin }}</small>
             </div>
           </div>
         </div>
+      </div>
+
+      <div v-else class="text-center py-4" style="color: #6c757d;">
+        <p>Đang tải đánh giá từ khách hàng...</p>
       </div>
     </section>
   </div>
@@ -260,23 +273,7 @@ export default {
           tag: 'Ngắm san hô'
         }
       ],
-      reviews: [
-        {
-          author: 'Minh Hoàng',
-          origin: 'Du khách từ Hà Nội',
-          comment: 'Xe Vision chạy cực êm, leo dốc Mũi Điện nhẹ nhàng. Anh chủ giao xe đúng giờ tại ga và nhiệt tình hướng dẫn đường đi ăn bánh hỏi cháo lòng ngon.'
-        },
-        {
-          author: 'Ngọc Lan',
-          origin: 'Du khách từ TP.HCM',
-          comment: 'Thủ tục nhanh gọn, mũ bảo hiểm mới và có kính chống nắng rất chu đáo. Sẽ giới thiệu cho bạn bè khi tới Phú Yên!'
-        },
-        {
-          author: 'Thành Trung',
-          origin: 'Phượt thủ',
-          comment: 'Thuê 2 chiếc Wave đi Gành Đá Đĩa và Vực Hòm 3 ngày liền không trục trặc gì. Giá thuê quá hợp lý so với chất lượng dịch vụ.'
-        }
-      ]
+      reviews: []
     };
   },
   methods: {
@@ -293,15 +290,33 @@ export default {
       } catch (error) {
         console.error("Lỗi khi tải thông kê trang chủ:", error);
       }
+    },
+    async fetchFeaturedReviews() {
+      try {
+        const response = await axios.get("http://localhost:5000/api/reviews/featured");
+        const data = Array.isArray(response.data) ? response.data : [];
+
+        // Khớp trực tiếp các field trả về từ controller backend (id, author, motorbike_name, rating, comment)
+        this.reviews = data.map((item) => ({
+          id: item.id,
+          author: item.author || "Khách hàng",
+          origin: item.motorbike_name ? `Thuê xe ${item.motorbike_name}` : "Khách thuê xe",
+          comment: item.comment,
+          rating: item.rating || 5
+        }));
+      } catch (error) {
+        console.error("Lỗi khi tải đánh giá từ CSDL:", error);
+        this.reviews = [];
+      }
     }
   },
   mounted() {
     this.fetchLandingStats();
+    this.fetchFeaturedReviews();
   }
 };
 </script>
 
 <style scoped>
 @import "@/assets/style/home.css";
-
 </style>

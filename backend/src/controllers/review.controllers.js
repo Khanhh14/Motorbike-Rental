@@ -84,3 +84,30 @@ exports.getReviewsByMotorbike = async (req, res) => {
     res.status(500).json({ message: "Lỗi server!" });
   }
 };
+// ✅ Lấy 3 đánh giá 5 sao nổi bật cho trang chủ
+exports.getFeaturedReviews = async (req, res) => {
+  try {
+    const sql = `
+      SELECT 
+        r.id, 
+        u.name AS author, 
+        m.model AS motorbike_name, 
+        r.rating, 
+        r.comment, 
+        r.created_at 
+      FROM reviews r
+      JOIN users u ON r.user_id = u.id
+      JOIN motorbikes m ON r.motorbike_id = m.id
+      WHERE r.rating = 5 AND r.comment IS NOT NULL AND TRIM(r.comment) != ''
+      ORDER BY r.created_at DESC
+      LIMIT 3
+    `;
+    const [results] = await db.query(sql);
+
+    // Trả về mảng (kể cả rỗng) với status 200 để frontend không nhảy vào block catch
+    res.json(results);
+  } catch (err) {
+    console.error("❌ Lỗi khi lấy đánh giá nổi bật:", err);
+    res.status(500).json({ message: "Lỗi server!" });
+  }
+};

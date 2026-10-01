@@ -19,6 +19,45 @@ router.get("/", reviewController.getAllReviews);
 
 /**
  * @openapi
+ * /api/reviews/featured:
+ *   get:
+ *     summary: Lấy 3 đánh giá 5 sao nổi bật cho trang chủ
+ *     tags: [Reviews]
+ *     responses:
+ *       200:
+ *         description: Lấy danh sách đánh giá nổi bật thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   author:
+ *                     type: string
+ *                     example: "Minh Hoàng"
+ *                   motorbike_name:
+ *                     type: string
+ *                     example: "Honda Vision 2023"
+ *                   rating:
+ *                     type: integer
+ *                     example: 5
+ *                   comment:
+ *                     type: string
+ *                     example: "Xe chạy rất êm, giao xe đúng giờ!"
+ *                   created_at:
+ *                     type: string
+ *                     format: date-time
+ *       500:
+ *         description: Lỗi máy chủ
+ */
+router.get("/featured", reviewController.getFeaturedReviews);
+
+/**
+ * @openapi
  * /api/reviews/{motorbike_id}:
  *   get:
  *     summary: Lấy danh sách đánh giá của một xe cụ thể
@@ -59,7 +98,7 @@ router.get("/:motorbike_id", reviewController.getReviewsByMotorbike);
  *             properties:
  *               motorbikeId:
  *                 type: string
- *                 example: "60d5ecb8b5c9c22b1c8e4111"
+ *                 example: "1"
  *                 description: ID xe được đánh giá
  *               rating:
  *                 type: integer
