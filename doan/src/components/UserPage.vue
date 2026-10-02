@@ -9,7 +9,8 @@
           <p class="subtitle">Quản lý thông tin cá nhân và lịch sử thuê xe của bạn</p>
         </div>
         <button class="btn-home" @click="dangXuat">
-          <span class="icon">🏠</span> Trang Chủ
+          <font-awesome-icon :icon="['fas', 'house']" class="btn-home-icon" />
+          <span>Trang Chủ</span>
         </button>
       </header>
 
@@ -21,11 +22,11 @@
           <div class="user-details">
             <h3 class="user-name">{{ user.name || 'Chưa cập nhật tên' }}</h3>
             <div class="info-item">
-              <span class="info-icon">📧</span>
+              <font-awesome-icon :icon="['fas', 'envelope']" class="info-icon icon-email" />
               <span class="info-text">{{ user.email }}</span>
             </div>
             <div class="info-item">
-              <span class="info-icon">📞</span>
+              <font-awesome-icon :icon="['fas', 'phone']" class="info-icon icon-phone" />
               <span class="info-text">{{ user.phone || 'Chưa có số điện thoại' }}</span>
             </div>
           </div>
@@ -33,21 +34,27 @@
 
         <section class="stats-container">
           <div class="stat-card">
-            <div class="stat-icon purple">🏍️</div>
+            <div class="stat-icon purple">
+              <font-awesome-icon :icon="['fas', 'motorcycle']" />
+            </div>
             <div class="stat-info">
               <span class="stat-label">Đã thuê</span>
               <h4 class="stat-value">{{ rentedCars.length }} xe</h4>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon gold">⭐</div>
+            <div class="stat-icon gold">
+              <font-awesome-icon :icon="['fas', 'star']" />
+            </div>
             <div class="stat-info">
               <span class="stat-label">Đánh giá</span>
               <h4 class="stat-value">4.8</h4>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon blue">🎁</div>
+            <div class="stat-icon blue">
+              <font-awesome-icon :icon="['fas', 'gift']" />
+            </div>
             <div class="stat-info">
               <span class="stat-label">Điểm thưởng</span>
               <h4 class="stat-value">2,450</h4>
@@ -81,7 +88,7 @@
               />
 
               <div v-else class="img-fallback">
-                <div>🏍️</div>
+                <font-awesome-icon :icon="['fas', 'motorcycle']" class="fallback-icon" />
                 <div class="model-name">{{ rental.motorbike_model || 'Xe' }}</div>
               </div>
             </div>
@@ -270,5 +277,6 @@ export default {
 
 <style scoped>
 @import "@/assets/style/UserPage.css";
+
 
 </style>

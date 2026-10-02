@@ -29,12 +29,16 @@ import {
   faRocket,
   faCommentDots,
   faXmark,
-  // Thêm mới cho 3 bước quy trình & trang chủ:
   faMobileScreenButton,
   faIdCard,
   faRoute,
   faTruckFast,
-  faRoad
+  faRoad,
+  // Thêm mới cho User Profile:
+  faHouse,
+  faEnvelope,
+  faPhone,
+  faGift
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -70,7 +74,11 @@ library.add(
   faIdCard,
   faRoute,
   faTruckFast,
-  faRoad
+  faRoad,
+  faHouse,
+  faEnvelope,
+  faPhone,
+  faGift
 );
 
 export default FontAwesomeIcon;
