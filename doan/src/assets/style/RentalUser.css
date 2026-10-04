@@ -320,3 +320,65 @@
 .clickable-row:hover {
   background-color: #f8fafc;
 }
+/* Icon tìm kiếm */
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+  font-size: 15px;
+}
+
+.search-box {
+  padding-left: 36px !important;
+}
+
+/* Icon nút đánh giá */
+.btn-review {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-icon {
+  color: #facc15;
+  font-size: 14px;
+}
+
+/* Icon đánh giá sao trong modal */
+.star-rating {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.star-item {
+  font-size: 26px;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.star-item:hover,
+.star-item.hovered,
+.star-item.active {
+  color: #facc15;
+}
+
+.star-item:hover {
+  transform: scale(1.15);
+}
+
+/* Nút đóng modal */
+.modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

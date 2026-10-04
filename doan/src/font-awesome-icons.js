@@ -38,8 +38,8 @@ import {
   faEnvelope, 
   faPhone, 
   faGift,
-  // Thêm mới icon địa chỉ:
-  faLocationDot
+  faLocationDot,
+  faMagnifyingGlass
 } from "@fortawesome/free-solid-svg-icons";
 
 // Import các icon mạng xã hội từ gói free-brands-svg-icons
@@ -92,7 +92,8 @@ library.add(
   faFacebook,
   faXTwitter,
   faYoutube,
-  faInstagram
+  faInstagram,
+  faMagnifyingGlass
 );
 
 export default FontAwesomeIcon;

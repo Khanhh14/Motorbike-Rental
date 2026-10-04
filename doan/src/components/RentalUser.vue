@@ -4,7 +4,7 @@
     <div class="sidebar-wrapper">
       <Sidebar />
     </div>
-    
+
     <!-- Main Content Zone -->
     <main class="main-container">
       <!-- Header Zone -->
@@ -14,9 +14,7 @@
           <p class="subtitle">Quản lý các đơn hàng và lịch sử thuê xe của bạn</p>
         </div>
         <div class="search-wrapper">
-          <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18">
-            <path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-          </svg>
+          <font-awesome-icon :icon="['fas', 'magnifying-glass']" class="search-icon" />
           <input 
             v-model="search" 
             placeholder="Tìm theo tên xe, người thuê..." 
@@ -67,9 +65,7 @@
                   class="btn-review"
                   @click.stop="openReviewModal(order)"
                 >
-                  <svg viewBox="0 0 24 24" width="16" height="16" class="btn-icon">
-                    <path fill="currentColor" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                  </svg>
+                  <font-awesome-icon :icon="['fas', 'star']" class="btn-icon" />
                   Đánh giá
                 </button>
               </td>
@@ -94,7 +90,9 @@
       <transition name="fade">
         <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
           <div class="modal-card">
-            <button class="modal-close" @click="showModal = false">&times;</button>
+            <button class="modal-close" @click="showModal = false" title="Đóng">
+              <font-awesome-icon :icon="['fas', 'xmark']" />
+            </button>
             
             <div class="modal-header">
               <h3>Đánh giá chuyến đi</h3>
@@ -109,7 +107,7 @@
                   <span
                     v-for="star in 5"
                     :key="star"
-                    class="star"
+                    class="star-item"
                     :class="{ 
                       'active': star <= (hoverRating || review.rating),
                       'hovered': star <= hoverRating 
@@ -118,7 +116,7 @@
                     @mouseover="hoverRating = star"
                     @mouseleave="hoverRating = 0"
                   >
-                    ★
+                    <font-awesome-icon :icon="['fas', 'star']" />
                   </span>
                 </div>
                 <span class="rating-text" v-if="review.rating || hoverRating">
@@ -155,6 +153,7 @@ import Sidebar from "@/components/SideUser.vue";
 import ModalDetailRental from "@/components/ModalDetailRental.vue";
 
 export default {
+  name: "RentalUser",
   components: {
     Sidebar,
     ModalDetailRental,
@@ -177,7 +176,7 @@ export default {
         rating: 0,
         comment: "",
       },
-      ratingLabels: ["Rất tệ ", "Tệ ", "Bình thường ", "Tốt ", "Rất tuyệt vời "],
+      ratingLabels: ["Rất tệ", "Tệ", "Bình thường", "Tốt", "Rất tuyệt vời"],
     };
   },
   computed: {
@@ -281,5 +280,66 @@ export default {
 <style scoped>
 @import "@/assets/style/RentalUser.css";
 
+/* Icon tìm kiếm */
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
 
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+  font-size: 15px;
+}
+
+.search-box {
+  padding-left: 36px !important;
+}
+
+/* Icon nút đánh giá */
+.btn-review {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-icon {
+  color: #facc15;
+  font-size: 14px;
+}
+
+/* Icon đánh giá sao trong modal */
+.star-rating {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.star-item {
+  font-size: 26px;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.star-item:hover,
+.star-item.hovered,
+.star-item.active {
+  color: #facc15;
+}
+
+.star-item:hover {
+  transform: scale(1.15);
+}
+
+/* Nút đóng modal */
+.modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 </style>
