@@ -17,11 +17,14 @@
           </p>
 
           <div class="hero-actions">
-            <button class="btn-primary" @click="$router?.push('/bikes')">
+            <!-- Đặt xe ngay -> chuyển sang /motorbikes -->
+            <button class="btn-primary" @click="$router?.push('/motorbikes')">
               <span>Đặt xe ngay</span>
               <font-awesome-icon :icon="['fas', 'arrow-right']" class="arrow-icon" />
             </button>
-            <button class="btn-secondary">
+
+            <!-- Xem bảng giá xe -> chuyển sang /TimeMotor -->
+            <button class="btn-secondary" @click="$router?.push('/TimeMotor')">
               <span>Xem bảng giá xe</span>
             </button>
           </div>
@@ -172,7 +175,6 @@
         <h2 class="section-title">KHÁCH HÀNG NÓI GÌ VỀ <span class="highlight">TRAVALIZER</span></h2>
       </div>
 
-      <!-- Danh sách 3 review nổi bật từ CSDL -->
       <div class="testimonials-grid" v-if="reviews.length > 0">
         <div class="testimonial-card" v-for="review in reviews" :key="review.id">
           <div class="stars">
@@ -207,7 +209,7 @@
 import axios from "axios";
 
 export default {
-  name: 'HomeView',
+  name: "HomeView",
   data() {
     return {
       stats: {
@@ -217,60 +219,60 @@ export default {
       },
       locations: [
         { 
-          name: 'THÁP NGHINH PHONG', 
-          image: new URL('@/assets/image/a1.jpg', import.meta.url).href,
-          distance: '2.5 km',
-          travelTime: '5 phút',
-          tag: 'Check-in nổi tiếng'
+          name: "THÁP NGHINH PHONG", 
+          image: new URL("@/assets/image/a1.jpg", import.meta.url).href,
+          distance: "2.5 km",
+          travelTime: "5 phút",
+          tag: "Check-in nổi tiếng"
         },
         { 
-          name: 'GÀNH ĐÁ ĐĨA', 
-          image: new URL('@/assets/image/a3.jpg', import.meta.url).href,
-          distance: '35 km',
-          travelTime: '45 phút',
-          tag: 'Kỳ quan thiên nhiên'
+          name: "GÀNH ĐÁ ĐĨA", 
+          image: new URL("@/assets/image/a3.jpg", import.meta.url).href,
+          distance: "35 km",
+          travelTime: "45 phút",
+          tag: "Kỳ quan thiên nhiên"
         },
         { 
-          name: 'MŨI ĐIỆN (HẢI ĐĂNG)', 
-          image: new URL('@/assets/image/a4.jpg', import.meta.url).href,
-          distance: '33 km',
-          travelTime: '40 phút',
-          tag: 'Đón bình minh'
+          name: "MŨI ĐIỆN (HẢI ĐĂNG)", 
+          image: new URL("@/assets/image/a4.jpg", import.meta.url).href,
+          distance: "33 km",
+          travelTime: "40 phút",
+          tag: "Đón bình minh"
         },
         { 
-          name: 'THÁP NHẠN', 
-          image: new URL('@/assets/image/a5.jpg', import.meta.url).href,
-          distance: '1.5 km',
-          travelTime: '4 phút',
-          tag: 'Di tích Chăm Pa'
+          name: "THÁP NHẠN", 
+          image: new URL("@/assets/image/a5.jpg", import.meta.url).href,
+          distance: "1.5 km",
+          travelTime: "4 phút",
+          tag: "Di tích Chăm Pa"
         },
         { 
-          name: 'VỰC HÒM', 
-          image: new URL('@/assets/image/a6.jpg', import.meta.url).href,
-          distance: '42 km',
-          travelTime: '55 phút',
-          tag: 'Phượt cắm trại'
+          name: "VỰC HÒM", 
+          image: new URL("@/assets/image/a6.jpg", import.meta.url).href,
+          distance: "42 km",
+          travelTime: "55 phút",
+          tag: "Phượt cắm trại"
         },
         { 
-          name: 'BÃI XÉP - HOA VÀNG CỎ XANH', 
-          image: new URL('@/assets/image/a7.jpg', import.meta.url).href,
-          distance: '14 km',
-          travelTime: '20 phút',
-          tag: 'Bãi biển đẹp'
+          name: "BÃI XÉP - HOA VÀNG CỎ XANH", 
+          image: new URL("@/assets/image/a7.jpg", import.meta.url).href,
+          distance: "14 km",
+          travelTime: "20 phút",
+          tag: "Bãi biển đẹp"
         },
         { 
-          name: 'NHÀ THỜ MẰNG LĂNG', 
-          image: new URL('@/assets/image/a8.jpg', import.meta.url).href,
-          distance: '32 km',
-          travelTime: '40 phút',
-          tag: 'Kiến trúc cổ'
+          name: "NHÀ THỜ MẰNG LĂNG", 
+          image: new URL("@/assets/image/a8.jpg", import.meta.url).href,
+          distance: "32 km",
+          travelTime: "40 phút",
+          tag: "Kiến trúc cổ"
         },
         { 
-          name: 'HÒN YẾN', 
-          image: new URL('@/assets/image/a9.jpg', import.meta.url).href,
-          distance: '20 km',
-          travelTime: '25 phút',
-          tag: 'Ngắm san hô'
+          name: "HÒN YẾN", 
+          image: new URL("@/assets/image/a9.jpg", import.meta.url).href,
+          distance: "20 km",
+          travelTime: "25 phút",
+          tag: "Ngắm san hô"
         }
       ],
       reviews: []
@@ -296,7 +298,6 @@ export default {
         const response = await axios.get("http://localhost:5000/api/reviews/featured");
         const data = Array.isArray(response.data) ? response.data : [];
 
-        // Khớp trực tiếp các field trả về từ controller backend (id, author, motorbike_name, rating, comment)
         this.reviews = data.map((item) => ({
           id: item.id,
           author: item.author || "Khách hàng",
