@@ -1,16 +1,5 @@
 <template>
   <div class="coupons-admin-container">
-    <!-- Header -->
-    <div class="page-header">
-      <div>
-        <h1 class="title">Quản lý mã giảm giá</h1>
-        <p class="subtitle">Tạo, cập nhật và theo dõi hiệu lực các mã khuyến mãi</p>
-      </div>
-      <button class="btn btn-primary" @click="openModal('create')">
-        + Thêm mã mới
-      </button>
-    </div>
-
     <!-- Thẻ thống kê (Stats Grid) -->
     <div class="stats-grid">
       <div class="stat-card blue">

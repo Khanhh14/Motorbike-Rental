@@ -11,20 +11,20 @@ const hiddenNavRoutes = [
   "/login","/admin","/sign-up","/userpage","/resetpassword","/forgotpassword",
   "/changepassword","/rental-motor","/admin/vehicle-type","/admin/rentals",
   "/admin/payments","/admin/motorbikes","/admin/surcharges",
-  "/admin/stats","/admin/reviews","/admin/chatadmin"
+  "/admin/stats","/admin/reviews","/admin/chatadmin", "/admin/coupons"
 ]
 const hiddenFooterRoutes = [
   "/admin","/login","/sign-up","/userpage","/resetpassword","/forgotpassword",
   "/changepassword","/rental-motor","/admin/vehicle-type","/admin/rentals",
   "/admin/payments","/admin/motorbikes","/admin/surcharges",
-  "/admin/stats","/admin/reviews","/admin/chatadmin"
+  "/admin/stats","/admin/reviews","/admin/chatadmin", "/admin/coupons"
 ]
 
 // Ẩn chat ở các route admin
 const hiddenChatRoutes = [
   "/admin","/admin/vehicle-type","/admin/rentals","/admin/payments",
   "/admin/motorbikes","/admin/surcharges","/admin/stats",
-  "/admin/reviews","/admin/chatadmin"
+  "/admin/reviews","/admin/chatadmin", "/admin/coupons"
 ]
 </script>
 
